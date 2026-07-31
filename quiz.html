@@ -219,6 +219,16 @@ const A = [_A0, _A1, _A2, _A3];
 // ============================================================
 const sanitizeStudentId = (v) => String(v||'').replace(/[^0-9A-Za-z]/g, '').slice(0, 12);
 const sanitizeName = (v) => String(v||'').replace(/[<>"'&\\]/g, '').slice(0, 50);
+// 個資完整性：四欄皆必填，CSV 匯出的前提
+const profileComplete = (p) => !!(p && String(p.name||'').trim() && String(p.studentId||'').trim() && String(p.email||'').trim() && String(p.group||'').trim());
+const profileMissing = (p) => {
+  const m = [];
+  if (!String(p.name||'').trim()) m.push('姓名 Name');
+  if (!String(p.studentId||'').trim()) m.push('學號 Student ID');
+  if (!String(p.email||'').trim()) m.push('Email');
+  if (!String(p.group||'').trim()) m.push('組別 Group');
+  return m;
+};
 
 // ============================================================
 // 題庫 — 8 主題 × 40 題（答案經過 XOR + Base64 混淆）
@@ -982,35 +992,47 @@ function computeTopicStats(state, topics) {
 // ============================================================
 function Profile({ state, setState, setView }) {
   const [p, setP] = useState(state.profile);
+  const [warn, setWarn] = useState(false);
+  const missing = profileMissing(p);
   return (
     <div className="max-w-xl">
       <h2 className="h-display text-2xl mb-1">個人資料</h2>
       <div className="serif italic opacity-70 mb-1" style={{color:'var(--mute)'}}>Profile</div>
       <Bi
-        zh="資料只儲存在本機瀏覽器，不會上傳。"
-        en="Data is stored locally in your browser only."
+        zh="四個欄位皆為必填；填妥後才能在儀表板匯出 CSV。資料只儲存在本機瀏覽器，不會上傳。"
+        en="All four fields are required; CSV export unlocks once complete. Data stays in your browser only."
         sizeZh="text-sm" sizeEn="text-xs"
         className="mb-5"
       />
       <div className="bcg-card p-6 space-y-4">
-        <Field labelZh="姓名" labelEn="Name (English / 中文)"
+        <Field labelZh="姓名" labelEn="Name (English / 中文)" required
           value={p.name} onChange={v => setP({ ...p, name: sanitizeName(v) })} />
-        <Field labelZh="學號" labelEn="Student ID"
+        <Field labelZh="學號" labelEn="Student ID" required
           value={p.studentId} onChange={v => setP({ ...p, studentId: sanitizeStudentId(v) })} />
-        <Field labelZh="Email" labelEn="Email" type="email"
+        <Field labelZh="Email" labelEn="Email" type="email" required
           value={p.email} onChange={v => setP({ ...p, email: sanitizeName(v) })} />
         <div>
           <label className="text-xs mb-1.5 block" style={{color:'var(--mute)'}}>
             <span>組別</span>
             <span className="italic ml-1 opacity-80">· Group</span>
+            <span className="ml-1" style={{color:'var(--bad)'}}>＊必填 / required</span>
           </label>
           <select value={p.group} onChange={e => setP({ ...p, group: e.target.value })}>
             <option value="">— Select —</option>
             {['G1','G2','G3','G4','G5','G6','G7','G8','G9','G10','G11','G12','Others'].map(g=> <option key={g} value={g}>{g}</option>)}
           </select>
         </div>
+        {warn && missing.length > 0 && (
+          <div className="text-sm rounded-lg p-3" style={{color:'var(--bad)', background:'rgba(179,38,30,.08)', border:'1px solid rgba(179,38,30,.3)'}}>
+            ⚠ 尚未填寫：{missing.join('、')}。四欄皆為必填。
+            <span className="block italic opacity-80 text-xs mt-1">Still missing: {missing.join(', ')}. All four fields are required.</span>
+          </div>
+        )}
         <div className="flex gap-3 pt-2">
-          <button className="bcg-btn" onClick={() => { setState(s => ({ ...s, profile: p })); setView("home"); window.scrollTo({top:0,behavior:'smooth'}); }}>
+          <button className="bcg-btn" onClick={() => {
+            if (missing.length > 0) { setWarn(true); return; }
+            setState(s => ({ ...s, profile: p })); setView("home"); window.scrollTo({top:0,behavior:'smooth'});
+          }}>
             儲存 / Save
           </button>
           <button className="bcg-btn-ghost" onClick={() => { setView("home"); window.scrollTo({top:0,behavior:'smooth'}); }}>取消 / Cancel</button>
@@ -1019,12 +1041,13 @@ function Profile({ state, setState, setView }) {
     </div>
   );
 }
-function Field({ labelZh, labelEn, value, onChange, type='text' }) {
+function Field({ labelZh, labelEn, value, onChange, type='text', required=false }) {
   return (
     <div>
       <label className="text-xs mb-1.5 block" style={{color:'var(--mute)'}}>
         <span>{labelZh}</span>
         <span className="italic ml-1 opacity-80">· {labelEn}</span>
+        {required && <span className="ml-1" style={{color:'var(--bad)'}}>＊必填 / required</span>}
       </label>
       <input type={type} value={value} onChange={e => onChange(e.target.value)} />
     </div>
@@ -1264,6 +1287,7 @@ function Dashboard({ state, setState, setView }) {
   }, [state.sessions]);
 
   function exportCSV() {
+    if (!profileComplete(state.profile)) { setExportWarn(true); return; }
     const rows = [];
     rows.push(["section", "field1", "field2", "field3", "field4", "field5", "field6", "field7"]);
     rows.push(["profile", "name", state.profile.name || "", "studentId", state.profile.studentId || "", "group", state.profile.group || "", state.profile.email || ""]);
@@ -1306,6 +1330,9 @@ function Dashboard({ state, setState, setView }) {
     }
   }
 
+  const complete = profileComplete(state.profile);
+  const [exportWarn, setExportWarn] = useState(false);
+
   return (
     <div>
       <div className="flex flex-wrap items-center gap-3 mb-5">
@@ -1313,11 +1340,31 @@ function Dashboard({ state, setState, setView }) {
           <h2 className="h-display text-2xl">學習儀表板</h2>
           <div className="serif italic text-sm opacity-70" style={{color:'var(--mute)'}}>Learning Dashboard</div>
         </div>
-        <button className="bcg-btn flex items-center gap-2" onClick={exportCSV}>
-          <Icon.Download size={16} /> 匯出 CSV / Export
+        <button className="bcg-btn flex items-center gap-2" style={complete ? undefined : {opacity:.45}}
+          onClick={() => { if (complete) { setExportWarn(false); exportCSV(); } else { setExportWarn(true); } }}>
+          <Icon.Download size={16} /> {complete ? '匯出 CSV / Export' : '匯出 CSV（未解鎖）'}
         </button>
         <button className="bcg-btn-ghost" onClick={resetAll}>清除 / Reset</button>
       </div>
+
+      {!complete && (
+        <div className={"rounded-lg p-3.5 mb-5 text-sm flex flex-wrap items-center gap-3 " + (exportWarn ? '' : 'opacity-80')}
+          style={exportWarn
+            ? {color:'var(--bad)', background:'rgba(179,38,30,.08)', border:'1.5px solid rgba(179,38,30,.45)'}
+            : {color:'var(--mute)', background:'var(--bcg-cream)', border:'1px solid var(--line)'}}>
+          <div className="flex-1 min-w-[220px]">
+            {exportWarn ? '⚠ 尚未填寫個人資料，無法匯出 CSV。' : '🔒 匯出 CSV 前，請先填寫個人資料（四欄皆必填）。'}
+            尚缺：{profileMissing(state.profile).join('、')}
+            <span className="block italic text-xs mt-1 opacity-80">
+              {exportWarn ? 'Profile incomplete — CSV export is locked. ' : 'Complete your profile to unlock CSV export. '}
+              Missing: {profileMissing(state.profile).join(', ')}
+            </span>
+          </div>
+          <button className="bcg-btn-ghost text-sm" onClick={() => { setView('profile'); window.scrollTo({top:0,behavior:'smooth'}); }}>
+            前往填寫 / Go to Profile
+          </button>
+        </div>
+      )}
 
       {state.profile.name && (
         <div className="bcg-card-cream p-4 mb-5 text-sm">
