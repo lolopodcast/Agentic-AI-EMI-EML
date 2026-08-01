@@ -546,7 +546,7 @@ const profileMissing = p => {
 };
 
 // ============================================================
-// 題庫 — 8 主題 × 40 題（答案經過 XOR + Base64 混淆）
+// 題庫 — 9 主題 × 45 題（答案經過 XOR + Base64 混淆）
 // ============================================================
 const TOPICS = [{
   id: "definitions",
@@ -923,6 +923,53 @@ const TOPICS = [{
     ans: A[2],
     expZh: "只有 1 則是「做一個網頁」；其餘跨越兩個以上 I-P-O 位置且集中於 Process。教師要的不是載體，是學生做完之後怎麼收、怎麼評、怎麼回饋（§10.3 發現一）——此發現已衍生出閉合迴圈設計指南。",
     expEn: "Only one response was 'build a page'; the rest span multiple I-P-O positions, concentrated in Process. The need is the closed loop, not the carrier (§10.3, finding one) — the finding that spawned the closed-loop design guide."
+  }]
+}, {
+  id: "measuring_outcome",
+  titleZh: "評量對照：Outcome 怎麼量",
+  titleEn: "Measuring Outcome",
+  descZh: "可計分 vs 只觀測、K·S·A 分項指標、aspiration 三角驗證（母 KB §12）",
+  descEn: "Gradable versus observe-only, K·S·A indicators, and aspiration triangulation.",
+  questions: [{
+    qZh: "母 KB 主張「Outcome 是兩個時間點的差」，下列哪一種說法因此站不住腳？",
+    qEn: "The KB argues that Outcome is the difference between two points in time. Which claim therefore fails?",
+    optsZh: ["這學期學生的 Outcome 達 85 分", "同一概念的錯誤率從 62% 降到 31%", "訂正後的版本比初稿多了具體例證", "期末上機考首次在時間內完成，期中則寫不出迴圈"],
+    optsEn: ["Our students reached 85 on Outcome this term", "The error rate for the same concept fell from 62% to 31%", "The revised version added concrete evidence the draft lacked", "They finished the final lab test in time, having failed the midterm one"],
+    ans: A[0],
+    expZh: "後三者都含前後兩個時間點，是變化量；第一項是單一時點的數字，無論叫什麼名字，量到的都還是 Output。",
+    expEn: "The last three each contain two time points and are therefore deltas. The first is a single-timepoint figure — whatever it is called, it still measures Output."
+  }, {
+    qZh: "教師想把「訂正完成率」納入學期成績以鼓勵學生訂正。依母 KB §12，這個做法的問題是？",
+    qEn: "A teacher wants revision-completion rate to count towards the term grade, to encourage revising. What does §12 say is wrong with that?",
+    optsZh: ["訂正率屬 L 類歷程資料，一旦計分即被表演，從內在動機退化為外在服從", "訂正率的統計誤差太大", "訂正率與 K 知識無關，不該計分", "學校規定成績只能來自考試"],
+    optsEn: ["Revision rate is class-L process data; grading it makes it performed and degrades intrinsic motivation into compliance", "Its statistical error is too large", "It is unrelated to K, so it should not be graded", "School rules allow grades from exams only"],
+    ans: A[0],
+    expZh: "這正是「代理指標的表演效應」：一旦計分，量到的東西恰好不再是你想量的東西。訂正率該用來決定要不要介入，不該換算成績。",
+    expEn: "This is proxy gaming: once graded, the measurement stops capturing what it was meant to. Revision rate should decide whether to intervene, not become marks."
+  }, {
+    qZh: "母 KB 指出 K、S、A 三個分量有一條規律，那是什麼？",
+    qEn: "The KB notes a regularity across the K, S and A components. What is it?",
+    optsZh: ["三者的權重相同", "測量成本遞增、可計分性遞減——這解釋了傳統評量為何塌縮成只考 K", "三者必須依序教授", "A 的重要性最低所以最後測"],
+    optsEn: ["They carry equal weight", "Measurement cost rises while gradability falls — which explains why traditional assessment collapses into testing K alone", "They must be taught in that order", "A matters least, so it is measured last"],
+    ans: A[1],
+    expZh: "K 最好測也最該計分，A 最難測且不該計分。傳統評量只考 K，不是因為 K 最重要，而是因為它最好量。",
+    expEn: "K is easiest to measure and most gradable; A is hardest and should not be graded. Tradition tests K not because it matters most, but because it quantifies most easily."
+  }, {
+    qZh: "某學生自主延伸很高（常問超出範圍的問題），但自我監控品質低、課後也無任何動作。依三角驗證的判讀紀律，可以下什麼結論？",
+    qEn: "A student shows high self-extension but low self-monitoring and no post-course activity. Under the triangulation discipline, what may be concluded?",
+    optsZh: ["aspiration 明顯上升", "aspiration 明顯下降", "無法判定——三者同向才構成證據，單一高分可能只是一時興趣", "應改用問卷直接詢問該生"],
+    optsEn: ["Aspiration has clearly risen", "Aspiration has clearly fallen", "No conclusion — evidence requires all three aligned; a single high trace may be a passing interest", "Administer a questionnaire to ask the student directly"],
+    ans: A[2],
+    expZh: "三個代理指標彼此獨立，任一單獨出現都不足以判定。①高但②低正是「一時興趣」的典型樣態，需再觀察。改用問卷則會落入社會期許偏誤。",
+    expEn: "The three traces are independent and none suffices alone. High self-extension with low persistence is the classic signature of passing interest. A questionnaire would reintroduce social-desirability bias."
+  }, {
+    qZh: "依母 KB §12.5 的誠實對照，「一份作業」最多能測到哪些？",
+    qEn: "Per the KB's honest mapping in §12.5, what can a single assignment measure at most?",
+    optsZh: ["完整涵蓋 competency 與 aspiration", "competency 的 S 與 A，加上 aspiration 的自我監控品質", "只有 K", "只有 aspiration"],
+    optsEn: ["Competency and aspiration in full", "The S and A components of competency, plus the self-monitoring trace of aspiration", "K only", "Aspiration only"],
+    ans: A[1],
+    expZh: "K 需要口頭抽問等另外的設計，aspiration 的自主延伸與持續性需要跨次追蹤。宣稱一份作業測到了 Outcome，正是 Output 通膨的另一種形式。",
+    expEn: "K needs a separate design such as oral spot-checks, and the self-extension and persistence traces need cross-round tracking. Claiming one assignment measured Outcome is Output inflation renamed."
   }]
 }];
 const TOTAL_Q = TOPICS.reduce((s, t) => s + t.questions.length, 0);
@@ -1437,7 +1484,7 @@ function Header({
     className: "brand-mark text-sm sm:text-base"
   }, "AAI QUIZ"), /*#__PURE__*/React.createElement("div", {
     className: "text-[10.5px] text-[#D8C3A5]/80 hidden sm:block"
-  }, "Agentic AI \xD7 EMI/EML Self-Assessment \xB7 40 Q"))), /*#__PURE__*/React.createElement("nav", {
+  }, "Agentic AI \xD7 EMI/EML Self-Assessment \xB7 45 Q"))), /*#__PURE__*/React.createElement("nav", {
     className: "flex items-center gap-1"
   }, /*#__PURE__*/React.createElement(NavBtn, {
     onClick: () => {
@@ -1512,7 +1559,7 @@ function Home({
     style: {
       color: 'var(--mute)'
     }
-  }, "Knowledge Self-Assessment \xB7 8 Topics \xD7 40 Questions"), /*#__PURE__*/React.createElement(Bi, {
+  }, "Knowledge Self-Assessment \xB7 9 Topics \xD7 45 Questions"), /*#__PURE__*/React.createElement(Bi, {
     zh: "\u5171 7 \u500B\u4E3B\u984C\u300140 \u9053\u984C\u76EE\u3002\u6BCF\u5B8C\u6210\u4E00\u500B\u4E3B\u984C\u5373\u53EF\u9001\u51FA\uFF0C\u53EF\u91CD\u4F5C\u6216\u9032\u5165\u4E0B\u4E00\u4E3B\u984C\u3002\u6240\u6709\u4F5C\u7B54\u6B77\u7A0B\u90FD\u6703\u8A18\u9304\u5728\u5100\u8868\u677F\u3002",
     en: "7 topics \xB7 40 questions. Submit per topic, retry or move on. All history is tracked in the Dashboard.",
     sizeZh: "text-base",
