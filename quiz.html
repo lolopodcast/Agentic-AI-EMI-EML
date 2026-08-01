@@ -9,7 +9,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.7/babel.min.js"></script>
 <script>
   tailwind.config = {
     darkMode: 'class',
@@ -188,8 +187,13 @@
 })();
 </script>
 
-<script type="text/babel">
-const { useState, useEffect, useMemo, useRef } = React;
+<script>
+const {
+  useState,
+  useEffect,
+  useMemo,
+  useRef
+} = React;
 
 // ============================================================
 // 答案混淆（XOR + Base64）
@@ -198,488 +202,602 @@ const _SALT = 'AAI_QUIZ_2026';
 const _e = (s, n) => {
   const p = s + ':' + n;
   let r = '';
-  for (let i = 0; i < p.length; i++)
-    r += String.fromCharCode(p.charCodeAt(i) ^ ((i + 7) * 3 & 0xFF));
+  for (let i = 0; i < p.length; i++) r += String.fromCharCode(p.charCodeAt(i) ^ (i + 7) * 3 & 0xFF);
   return btoa(r);
 };
-const _d = (token) => {
+const _d = token => {
   try {
     const decoded = atob(token);
     let r = '';
-    for (let i = 0; i < decoded.length; i++)
-      r += String.fromCharCode(decoded.charCodeAt(i) ^ ((i + 7) * 3 & 0xFF));
+    for (let i = 0; i < decoded.length; i++) r += String.fromCharCode(decoded.charCodeAt(i) ^ (i + 7) * 3 & 0xFF);
     return parseInt(r.split(':')[1], 10);
-  } catch (e) { return -1; }
+  } catch (e) {
+    return -1;
+  }
 };
-const _A0 = _e(_SALT, 0), _A1 = _e(_SALT, 1), _A2 = _e(_SALT, 2), _A3 = _e(_SALT, 3);
+const _A0 = _e(_SALT, 0),
+  _A1 = _e(_SALT, 1),
+  _A2 = _e(_SALT, 2),
+  _A3 = _e(_SALT, 3);
 const A = [_A0, _A1, _A2, _A3];
 
 // ============================================================
 // Sanitize helpers
 // ============================================================
-const sanitizeStudentId = (v) => String(v||'').replace(/[^0-9A-Za-z]/g, '').slice(0, 12);
-const sanitizeName = (v) => String(v||'').replace(/[<>"'&\\]/g, '').slice(0, 50);
+const sanitizeStudentId = v => String(v || '').replace(/[^0-9A-Za-z]/g, '').slice(0, 12);
+const sanitizeName = v => String(v || '').replace(/[<>"'&\\]/g, '').slice(0, 50);
 // 個資完整性：四欄皆必填，CSV 匯出的前提
-const profileComplete = (p) => !!(p && String(p.name||'').trim() && String(p.studentId||'').trim() && String(p.email||'').trim() && String(p.group||'').trim());
-const profileMissing = (p) => {
+const profileComplete = p => !!(p && String(p.name || '').trim() && String(p.studentId || '').trim() && String(p.email || '').trim() && String(p.group || '').trim());
+const profileMissing = p => {
   const m = [];
-  if (!String(p.name||'').trim()) m.push('姓名 Name');
-  if (!String(p.studentId||'').trim()) m.push('學號 Student ID');
-  if (!String(p.email||'').trim()) m.push('Email');
-  if (!String(p.group||'').trim()) m.push('組別 Group');
+  if (!String(p.name || '').trim()) m.push('姓名 Name');
+  if (!String(p.studentId || '').trim()) m.push('學號 Student ID');
+  if (!String(p.email || '').trim()) m.push('Email');
+  if (!String(p.group || '').trim()) m.push('組別 Group');
   return m;
 };
 
 // ============================================================
 // 題庫 — 8 主題 × 40 題（答案經過 XOR + Base64 混淆）
 // ============================================================
-const TOPICS = [
-  {
-    id: "definitions",
-    titleZh: "定義與心法",
-    titleEn: "Definitions & Mindset",
-    descZh: "Agentic AI、EMI/EML、educate 字源與素養公式（母 KB §1・§4）",
-    descEn: "Agentic AI, EMI/EML, the etymology of educate, and the competency formula.",
-    questions: [
-      {
-        qZh: "板書將 Assistant 標註為「by order」，指的是哪一種運作型態？",
-        qEn: "The whiteboard labels Assistant as 'by order'. Which mode of operation does this describe?",
-        optsZh: ["自主拆解任務並連續執行到完成", "在人工作的過程中主動補完內容", "自行選擇並呼叫外部工具", "一個指令做一件事，做完即停等待下一個指令"],
-        optsEn: ["Decomposes tasks autonomously and runs to completion", "Proactively completes content while you work", "Selects and calls external tools by itself", "One order, one action — then stops and waits for the next order"],
-        ans: A[3],
-        expZh: "by order＝指令驅動：人下一個指令、AI 做一件事，人必須推動每一步（§1.1）。選項一是 Agentic AI、選項二是 Co-pilot 的特徵。",
-        expEn: "'By order' means command-driven: one order, one action, and the human pushes every step (§1.1). Option 1 describes Agentic AI; option 2 describes Co-pilot."
-      },
-      {
-        qZh: "依自主程度由低到高，三種協作型態的正確排序是？",
-        qEn: "Ranked from least to most autonomous, what is the correct order of the three collaboration modes?",
-        optsZh: ["Assistant → Co-pilot → Agentic AI", "Co-pilot → Assistant → Agentic AI", "Agentic AI → Co-pilot → Assistant", "Assistant → Agentic AI → Co-pilot"],
-        optsEn: ["Assistant → Co-pilot → Agentic AI", "Co-pilot → Assistant → Agentic AI", "Agentic AI → Co-pilot → Assistant", "Assistant → Agentic AI → Co-pilot"],
-        ans: A[0],
-        expZh: "光譜為 Assistant（by order）→ Co-pilot（協作建議）→ Agentic AI（承接意圖、自主代理）（§1.1）。往右讓渡越多判斷權，效率越高、過程掌握越少。",
-        expEn: "The spectrum runs Assistant (by order) → Co-pilot (suggests) → Agentic AI (takes an intention and acts autonomously) (§1.1). Moving right trades process visibility for efficiency."
-      },
-      {
-        qZh: "板書把 educate 拆為 e-duc-ate，用意是強調教育的本質是什麼？",
-        qEn: "The whiteboard splits educate into e-duc-ate. What essence of education does this emphasise?",
-        optsZh: ["「灌輸」——把知識注入學生腦中", "「引出」——把學生既有的東西引導、誘發、啟發出來", "「訓練」——反覆操作直到熟練", "「傳授」——由上而下給予標準答案"],
-        optsEn: ["'Instil' — pouring knowledge into students' heads", "'Draw out' — guiding, eliciting and inspiring what students already have", "'Drill' — repeated practice until fluent", "'Transmit' — handing down standard answers from above"],
-        ans: A[1],
-        expZh: "e-duc-ate 字源意義是「引出」：教育不是灌輸，而是引導、誘發、啟發（§1.3）。其餘三個選項都是「把東西放進去」的想像。",
-        expEn: "The root of e-duc-ate means 'to draw out': education is guidance, elicitation and inspiration, not transmission (§1.3). The other options all imagine putting something in."
-      },
-      {
-        qZh: "同一堂全英語授課的課，怎樣才算從 EMI 真正走進了 EML？",
-        qEn: "In the same English-taught class, what marks the real shift from EMI to EML?",
-        optsZh: ["教師全程以流利英語講授", "增加英語聽力測驗的比重", "學生必須用英語完成任務、討論並做出產出", "聘請外籍教師協同授課"],
-        optsEn: ["The teacher lectures fluently in English throughout", "More weight is given to English listening tests", "Students must use English to complete tasks, discuss and produce work", "A foreign co-teacher joins the course"],
-        ans: A[2],
-        expZh: "EMI 重心在 Instruction（教師的教），EML 重心在 Learning by Doing（學生做中學）；主體從教師換成學生才算進入 EML，終點是 SDL 自主學習（§1.2）。",
-        expEn: "EMI centres on instruction (the teacher teaching); EML centres on learning by doing. Only when the subject shifts to the student does EML begin, with SDL as the destination (§1.2)."
-      },
-      {
-        qZh: "素養公式 competency = f(K, S, A) 中，AI 時代相對權重上升的是哪些變數？為什麼？",
-        qEn: "In competency = f(K, S, A), which variables gain relative weight in the AI era, and why?",
-        optsZh: ["K——因為知識更新速度更快", "S 與 A——因為 K 的取得成本趨近於零，鑑別力下降", "三者權重不變——公式本來就是均衡的", "只有 A 上升——S 已被 AI 取代"],
-        optsEn: ["K — because knowledge now updates faster", "S and A — because the cost of acquiring K approaches zero, so K loses discriminating power", "None — the formula is balanced by design", "Only A — S has been replaced by AI"],
-        ans: A[1],
-        expZh: "當 AI 可以瞬間供應 K，K 的鑑別力下降，技能 S 與態度／價值觀 A 的相對重要性上升——這正是教師不可取代之處（§1.4）。",
-        expEn: "When AI supplies K instantly, K loses discriminating power and Skill plus Attitude rise in relative weight — precisely where teachers remain irreplaceable (§1.4)."
-      }
-    ]
-  },
-  {
-    id: "ipo",
-    titleZh: "I-P-O 核心架構",
-    titleEn: "The I-P-O Architecture",
-    descZh: "Input–Process–Output–Outcome、三操作要素與整合流程（母 KB §2・§7）",
-    descEn: "Input–Process–Output–Outcome, the three operating elements, and the end-to-end flow.",
-    questions: [
-      {
-        qZh: "「學生三秒鐘就能生出一份報告」之所以構成評量問題，關鍵在於？",
-        qEn: "Why does 'a student can generate a report in three seconds' create an assessment problem?",
-        optsZh: ["報告品質必然大幅下降", "學生會停止上課", "Output 已失去鑑別力，評量重心必須移往 Outcome", "AI 生成的內容必然有事實錯誤"],
-        optsEn: ["Report quality inevitably collapses", "Students will stop attending class", "Output has lost its discriminating power, so assessment must move to Outcome", "AI-generated content always contains factual errors"],
-        ans: A[2],
-        expZh: "Output 是交出去的東西、Outcome 是真正的改變；AI 讓 Output 變便宜，繼續只檢查 Output 等於在量一個已通膨的指標（§2.1）。",
-        expEn: "Output is what gets handed in; Outcome is the real change. AI makes Output cheap, so inspecting Output alone measures an inflated indicator (§2.1)."
-      },
-      {
-        qZh: "驅動整條 I-P-O 鏈的起點是什麼？",
-        qEn: "What drives the entire I-P-O chain?",
-        optsZh: ["工具堆疊的完整度", "資源庫存的多寡", "Context Window 的大小", "Intention（意圖）——再具體化為 Goal"],
-        optsEn: ["The completeness of the tool stack", "The size of the resource repository", "The size of the context window", "Intention — made concrete as a Goal"],
-        ans: A[3],
-        expZh: "一切從意圖出發：Intention → Goal → I-P-O；驅動鏈條的是意圖而非工具（§2.2 ①）。",
-        expEn: "Everything starts from intention: Intention → Goal → I-P-O. What drives the chain is intention, not tooling (§2.2)."
-      },
-      {
-        qZh: "教師對 AI 說「幫我做一個好看的教學網頁」，卻沒有提供任何課程內容——最可能的結果是？",
-        qEn: "A teacher tells AI 'make me a beautiful teaching page' but supplies no course content. The most likely result?",
-        optsZh: ["產出漂亮但與課程脫節的網頁——缺了 ② 資源，AI 只能憑空瞎編", "AI 拒絕執行並要求付費", "網頁做出來但無法開啟", "Token 立即耗盡導致中斷"],
-        optsEn: ["A handsome page disconnected from the course — with element ② missing, AI can only invent", "AI refuses and demands payment", "The page is built but will not open", "Tokens run out immediately"],
-        ans: A[0],
-        expZh: "三要素：① 意圖 ② 資源 ③ Vibe Coding。缺 ② 資源，AI 沒有情境依據，只能泛泛而談或憑空生成（§2.2）。",
-        expEn: "The three elements are ① intention ② resources ③ vibe coding. Without ②, AI has no grounding and can only generalise or invent (§2.2)."
-      },
-      {
-        qZh: "板書 Page 3 為整合流程補上的「頭」與「尾」分別是什麼？",
-        qEn: "What 'head' and 'tail' does whiteboard Page 3 add to the end-to-end flow?",
-        optsZh: ["頭：安裝工具；尾：成果發表會", "頭：需求來自 TA（學生）；尾：Feedback Loop 繞回需求", "頭：環境設定；尾：檔案備份", "頭：分組名單；尾：成績結算"],
-        optsEn: ["Head: installing tools; tail: a showcase event", "Head: needs obtained from the TA (students); tail: a feedback loop back to needs", "Head: environment setup; tail: file backup", "Head: group rosters; tail: grade computation"],
-        ans: A[1],
-        expZh: "Page 1/2 的流程是一條線；Page 3 補上頭（Intention 不是教師自訂，而是從 TA 取得 Needs）與尾（Feedback Loop 回到需求），整條流程變成迴圈（§7）。",
-        expEn: "Pages 1/2 draw a line; Page 3 adds the head (needs obtained from the TA, not set by the teacher) and the tail (a feedback loop back to needs), turning the line into a loop (§7)."
-      },
-      {
-        qZh: "常態分佈圖旁「看緣份／先不管 → 往前」代表哪一種務實的教學資源配置觀？",
-        qEn: "Next to the normal curve, 'leave the tails to fate → push forward' expresses which pragmatic view of teaching resources?",
-        optsZh: ["放棄後段班學生", "只栽培最前段的資優生", "兩端極端值難以短期撼動，把心力用於推動整條分佈前移", "把班級依能力重新分班"],
-        optsEn: ["Give up on the weakest students", "Cultivate only the strongest students", "The tails are hard to move in the short run — spend effort moving the whole distribution forward", "Re-stream the class by ability"],
-        ans: A[2],
-        expZh: "不是放棄任何人，而是承認資源有限：兩端受課堂外因素主導，邊際效益最高的投入是推動整體分佈前移（§1.4）。",
-        expEn: "Not abandonment but resource realism: the tails are dominated by out-of-class factors, so the highest-margin effort moves the whole curve forward (§1.4)."
-      }
-    ]
-  },
-  {
-    id: "environment",
-    titleZh: "環境與工具",
-    titleEn: "Environment & Tools",
-    descZh: "第 0 步、輸入裝置與工具堆疊（母 KB §3）",
-    descEn: "Step zero, input devices, and the tool stack.",
-    questions: [
-      {
-        qZh: "工作坊要求「課前先指定工作資料夾」，在整體架構上這個動作屬於？",
-        qEn: "The workshop asks teachers to designate a working folder before class. Where does this act sit in the architecture?",
-        optsZh: ["第 0 步環境——劃定一個 project 的邊界與 AI 的可見範圍", "① Intention——設定目標", "Output——整理產出檔案", "RAG——建立檢索索引"],
-        optsEn: ["Step-zero environment — defining the project boundary and AI's visible scope", "① Intention — setting the goal", "Output — organising deliverables", "RAG — building a retrieval index"],
-        ans: A[0],
-        expZh: "工作資料夾＝一個 project 的邊界，也是 AI 的可見範圍與協作記憶範圍；環境沒設好，後面的 I-P-O 無法落地（§3.1）。",
-        expEn: "The working folder is the project boundary and AI's visible, memorable scope. Without the environment, the I-P-O chain cannot land (§3.1)."
-      },
-      {
-        qZh: "環境設計標註「attention-based」，其教學意涵是？",
-        qEn: "The environment is annotated 'attention-based'. What is the pedagogical point?",
-        optsZh: ["應採用 Transformer 的注意力機制建模", "要求學生上課專心聽講", "加裝攝影機記錄學生的注意力", "注意力是課堂最稀缺的資源，環境決定它花在學習還是花在對抗介面"],
-        optsEn: ["Model the class with Transformer attention", "Require students to pay attention in class", "Install cameras to record attention", "Attention is the scarcest classroom resource; the environment decides whether it goes to learning or to fighting the interface"],
-        ans: A[3],
-        expZh: "裝置是否順暢、素材能否即時取得，直接決定學生要花多少心力對抗介面而非投入學習（§3.1）。",
-        expEn: "Whether devices run smoothly and material is instantly available decides how much effort students spend fighting the interface instead of learning (§3.1)."
-      },
-      {
-        qZh: "下列「輸入裝置 → 產出素材形式」的對應，何者正確？",
-        qEn: "Which device-to-material mapping is correct?",
-        optsZh: ["桌面攝影機 → video/audio", "Google Meet・Moodle/BBB → video/audio", "Timer → image/text", "桌面攝影機 → 節奏控制"],
-        optsEn: ["Desktop camera → video/audio", "Google Meet / Moodle (BBB) → video/audio", "Timer → image/text", "Desktop camera → pacing control"],
-        ans: A[1],
-        expZh: "桌面攝影機收 image/text（拍板書、拍手寫），Meet／Moodle(BBB) 收 video/audio（錄影錄音），Timer 管節奏（§3.2）。",
-        expEn: "The desktop camera captures image/text, Meet and Moodle (BBB) capture video/audio, and the timer controls pace (§3.2)."
-      },
-      {
-        qZh: "工具公式 tools = Σ APIs + MCP servers + Σ Skills 冠上 Σ（加總）的用意是？",
-        qEn: "Why does the tool formula carry Σ (summation) signs?",
-        optsZh: ["表示工具的授權成本會逐年累加", "表示需要一次購足所有工具", "能力是可累加的資產——每加一項，之後所有專案都受益", "純粹是數學記號的美觀"],
-        optsEn: ["Licensing costs accumulate year by year", "All tools must be bought at once", "Capability is a cumulative asset — each addition benefits every later project", "It simply looks mathematical"],
-        ans: A[2],
-        expZh: "Σ 強調能力可累加、投資報酬隨時間放大：Skills 做一次、每學期複用（§3.3）。",
-        expEn: "Σ stresses that capability accumulates and returns compound: build a skill once, reuse it every term (§3.3)."
-      },
-      {
-        qZh: "教師想讓 AI 直接讀取學校 Moodle 上的課程資料，最對應工具堆疊中的哪一項？",
-        qEn: "A teacher wants AI to read course data on the school's Moodle directly. Which part of the tool stack does this correspond to?",
-        optsZh: ["MCP servers——把外部系統掛進 AI 的標準接法", "Σ Skills——可重複使用的做法封裝", "Timer——輸入裝置", "SVG——可視化產出"],
-        optsEn: ["MCP servers — the standard way to plug external systems into AI", "Σ Skills — reusable packaged methods", "Timer — an input device", "SVG — a visual output"],
-        ans: A[0],
-        expZh: "MCP（Model Context Protocol）是把外部系統（如 LMS）掛進 AI 的標準接法，等於為 AI 裝上可插拔的手腳（§3.3）。",
-        expEn: "MCP is the standard protocol for plugging external systems such as an LMS into AI — pluggable hands and feet (§3.3)."
-      }
-    ]
-  },
-  {
-    id: "method",
-    titleZh: "心法手法與素材流",
-    titleEn: "Mindset, Method & Material Flow",
-    descZh: "AI 三角色、課堂組織、收斂為文字與四階產出鏈（母 KB §4・§5）",
-    descEn: "The three AI roles, classroom organisation, converging on text, and the four-stage chain.",
-    questions: [
-      {
-        qZh: "學生把期末報告題目丟給 AI 直接生成全文繳交——此時 AI 扮演的角色與教學後果是？",
-        qEn: "A student feeds the final-report topic to AI and submits the generated text. Which role is AI playing, with what consequence?",
-        optsZh: ["教練——學習被加速", "管家——時間被釋放給高階思考", "工程師——產出存在，但學習消失", "引導者——SDL 自主學習發生"],
-        optsEn: ["Coach — learning accelerates", "Butler — time is freed for higher-order thinking", "Engineer — the artefact exists, but learning disappears", "Facilitator — SDL takes place"],
-        ans: A[2],
-        expZh: "工程師角色直接把構想造成成品；用在學生作業上，產出存在但學習過程被跳過（§4.1）。教練陪練、管家處理雜務，兩者不代替學生完成。",
-        expEn: "The engineer role builds the artefact directly; applied to student work, the output exists but learning is skipped (§4.1). Coach and butler do not complete the work for the student."
-      },
-      {
-        qZh: "「自作 ✕ 協作」的課堂組織下，教師角色發生什麼轉變？",
-        qEn: "Under 'individual work × collaboration', how does the teacher's role change?",
-        optsZh: ["從 Lecture 者轉為引導者", "從引導者轉為講授者", "從教學者轉為評分者", "從課程設計者轉為旁觀者"],
-        optsEn: ["From lecturer to facilitator", "From facilitator to lecturer", "From teacher to grader", "From designer to bystander"],
-        ans: A[0],
-        expZh: "小組編制（每組約 5 人）配合自作×協作，教師從 Lecture 者轉為引導者（§4.3）——呼應 educate＝引出。",
-        expEn: "With five-person groups combining individual and collaborative work, the teacher shifts from lecturer to facilitator (§4.3) — echoing educate = draw out."
-      },
-      {
-        qZh: "為什麼手法的第 ⓪ 步是「把所有模態先收斂為文字」？",
-        qEn: "Why is step ⓪ of the method 'converge every modality into text first'?",
-        optsZh: ["因為文字檔案體積最小", "因為學生偏好閱讀文字", "因為影音檔案無法長期保存", "因為文字是 AI 處理成本最低、最易檢索與版本控制的形式"],
-        optsEn: ["Text files are smallest", "Students prefer reading text", "Audio and video cannot be preserved", "Text is the cheapest form for AI to process, retrieve and version-control"],
-        ans: A[3],
-        expZh: "語音、圖像（OCR）、影片全部轉成文字後，AI 才好處理；文字也最容易檢索與版本控制（§5.1）。",
-        expEn: "Speech, images (via OCR) and video all convert to text so AI can process them; text is also easiest to retrieve and version (§5.1)."
-      },
-      {
-        qZh: "「給 AI 看」與「給人看」分別對應哪組格式？",
-        qEn: "Which format pair corresponds to 'for AI' versus 'for humans'?",
-        optsZh: ["Markdown（.md）↔ SVG／SPA／PWA", "PDF ↔ Word", "SPA ↔ Markdown（.md）", "影片 ↔ 投影片"],
-        optsEn: ["Markdown (.md) ↔ SVG / SPA / PWA", "PDF ↔ Word", "SPA ↔ Markdown (.md)", "Video ↔ Slides"],
-        ans: A[0],
-        expZh: ".md 是給 AI 讀的結構化母版；SVG／SPA／PWA 是從母版派生、給人看的可視化呈現層（§5.2・§5.3）。",
-        expEn: ".md is the structured master for AI; SVG, SPA and PWA are human-facing presentation layers derived from it (§5.2, §5.3)."
-      },
-      {
-        qZh: "依四階產出鏈的邏輯，教師的心力應優先投在哪裡？為什麼？",
-        qEn: "By the logic of the four-stage chain, where should a teacher invest effort first, and why?",
-        optsZh: ["SPA 的動畫與美編——第一印象最重要", "KB(.md) 母版——母版夠結構化，SVG/SPA/PWA 都能由 AI 派生，呈現層是可拋棄的", "PWA 的安裝流程——確保學生裝得起來", "SVG 的配色——視覺一致性優先"],
-        optsEn: ["SPA animation and styling — first impressions matter most", "The KB (.md) master — with a structured master, SVG/SPA/PWA can all be derived by AI; presentation layers are disposable", "The PWA install flow — make sure students can install it", "SVG colour schemes — visual consistency first"],
-        ans: A[1],
-        expZh: "價值集中在母版：.md 夠結構化，三種呈現層都能隨時重新派生；直接經營呈現層，內容就被鎖死在單一形式（§5.3）。",
-        expEn: "Value sits in the master: with a structured .md, every presentation layer can be re-derived at will; investing in the layer locks content into one form (§5.3)."
-      }
-    ]
-  },
-  {
-    id: "memory",
-    titleZh: "記憶與情境管理",
-    titleEn: "Memory & Context",
-    descZh: "長短期記憶、三層作用域、Token 經濟學與 RAG（母 KB §6）",
-    descEn: "Memory timescales, the three scopes, token economics and RAG.",
-    questions: [
-      {
-        qZh: "一段很有價值的課堂討論，若只停留在當次 AI 對話（session）中，結局是？",
-        qEn: "A valuable classroom discussion stays only in the current AI session. What happens to it?",
-        optsZh: ["AI 會自動永久記住", "隨 session 結束而消失——必須寫進 .md 才轉為長期記憶", "自動同步到雲端硬碟", "轉存為語音檔保留"],
-        optsEn: ["AI remembers it permanently", "It vanishes when the session ends — it must be written into .md to become long-term memory", "It syncs to cloud storage automatically", "It is preserved as an audio file"],
-        ans: A[1],
-        expZh: "短期記憶只活在 session 內；寫成 Markdown 知識庫＝把短期記憶轉為長期記憶（§6.1）。",
-        expEn: "Short-term memory lives only inside the session; writing a Markdown KB converts it into long-term memory (§6.1)."
-      },
-      {
-        qZh: "「所有專案都適用的個人寫作風格偏好」應該放在三層作用域的哪一層？",
-        qEn: "Where should 'personal writing-style preferences that apply to every project' live among the three scopes?",
-        optsZh: ["Session——對話回合", "專案——工作資料夾", "全域——claude.md", "不必儲存，每次重新告知即可"],
-        optsEn: ["Session — the conversation turn", "Project — the working folder", "Global — claude.md", "Nowhere; restate it each time"],
-        ans: A[2],
-        expZh: "三層依變動頻率分配：越不常變的放越上層。跨專案通用的偏好屬全域 claude.md；專案專用規則寫進全域會污染其他專案（§6.2）。",
-        expEn: "Scopes are layered by rate of change: the less it changes, the higher it lives. Cross-project preferences belong in global claude.md (§6.2)."
-      },
-      {
-        qZh: "「Token 經濟學」這門帳之所以存在，根本原因是？",
-        qEn: "Why does 'token economics' exist at all?",
-        optsZh: ["AI 服務按月訂閱收費", "Token 的市場價格會波動", "模型參數數量太龐大", "Context Window 容量有限——稀缺才有經濟學"],
-        optsEn: ["AI services charge monthly", "Token prices fluctuate", "Models have too many parameters", "The context window is finite — scarcity is what creates economics"],
-        ans: A[3],
-        expZh: "Context Window 是稀缺資源，必須決定「什麼直接放入、什麼外掛」——稀缺才有經濟學（§6.3）。",
-        expEn: "The context window is scarce, forcing choices about what goes in directly and what is externalised — scarcity creates economics (§6.3)."
-      },
-      {
-        qZh: "RAG（檢索增強生成）的作用機制是？",
-        qEn: "How does RAG (retrieval-augmented generation) work?",
-        optsZh: ["直接擴大模型的參數量", "資料外置，需要時檢索相關片段送入——變相擴充 Context Window", "把文字壓縮成更少的 token", "以快取記住上一次的對話"],
-        optsEn: ["It enlarges the model's parameters", "Data lives outside; relevant fragments are retrieved and fed in on demand — effectively expanding the context window", "It compresses text into fewer tokens", "It caches the previous conversation"],
-        ans: A[1],
-        expZh: "RAG 讓大量資料存放在 Context Window 之外，需要時才檢索片段送入，等於擴充稀缺資源（§6.3）。",
-        expEn: "RAG stores bulk data outside the window and retrieves fragments on demand — a way of expanding the scarce resource (§6.3)."
-      },
-      {
-        qZh: "甲老師的知識庫是結構化 .md，乙老師是雜亂的講義掃描檔。兩人同樣用 RAG，效果差異的關鍵是？",
-        qEn: "Teacher A keeps a structured .md KB; teacher B keeps messy scanned handouts. Both use RAG. What decides the difference?",
-        optsZh: ["兩人使用的模型版本", "網路連線速度", "檔案總大小", "檢索品質取決於外部資料的結構化程度——知識庫是 RAG 的燃料"],
-        optsEn: ["Their model versions", "Network speed", "Total file size", "Retrieval quality depends on how structured the external data is — the KB is RAG's fuel"],
-        ans: A[3],
-        expZh: "RAG 的檢索品質取決於外部資料的結構化程度；知識庫（.md）既是長期記憶的載體，也是讓 RAG 有效的前提（§6.3）。",
-        expEn: "RAG retrieval quality depends on the structure of the external data; the .md KB is both the vessel of long-term memory and the precondition for effective RAG (§6.3)."
-      }
-    ]
-  },
-  {
-    id: "pm",
-    titleZh: "教授即產品經理",
-    titleEn: "The Professor as PM",
-    descZh: "PM/PjM、TA 雙關、價值主張與傳遞、AI-native（母 KB §8・板書 Page 3）",
-    descEn: "PM/PjM, the TA pun, value proposition and delivery, and the AI-native generation.",
-    questions: [
-      {
-        qZh: "教授同時被對位為 PM（產品經理）與 PjM（專案經理），兩個角色在教學工作上的分工是？",
-        qEn: "The professor maps to both PM and PjM. How do the two roles divide teaching work?",
-        optsZh: ["PM 管人事、PjM 管預算", "學期初決定課綱教材與評量（PM）；學期中控進度、協調助教、處理突發（PjM）", "PM 是正教授、PjM 是助理教授", "兩者是同一件事的不同稱呼"],
-        optsEn: ["PM handles people, PjM handles budget", "Setting syllabus, materials and assessment at term start (PM); managing pace, assistants and surprises mid-term (PjM)", "PM means full professor, PjM assistant professor", "They are two names for the same thing"],
-        ans: A[1],
-        expZh: "PM 決定做什麼、為誰做、為何值得；PjM 在期限與資源內把它做出來。教師在學期初是 PM、學期中是 PjM（§8.1）。",
-        expEn: "PM owns what, for whom and why; PjM owns delivery within constraints. Teachers act as PM at term start and PjM through the term (§8.1)."
-      },
-      {
-        qZh: "板書刻意讓 TA 這個縮寫出現在管線兩端，它的雙關是？",
-        qEn: "The whiteboard deliberately places 'TA' at both ends of the pipeline. What is the pun?",
-        optsZh: ["Teaching Award 與 Target Audience", "Teaching Activity 與 Target Answer", "供給端 Σ TA＝Teaching Assistant（助教／資源）；需求端圈起的 TA＝Target Audience（學生／對象）", "兩端都指助教"],
-        optsEn: ["Teaching Award and Target Audience", "Teaching Activity and Target Answer", "Supply side Σ TA = Teaching Assistants (a resource); demand side circled TA = Target Audience (the students served)", "Both mean teaching assistants"],
-        ans: A[2],
-        expZh: "同一縮寫，一端是「誰跟我一起做」（助教），一端是「我做給誰」（目標客群）。教學設計最常見的失誤是只經營供給端、從未認真定義需求端（§8.1）。",
-        expEn: "One abbreviation: 'who builds with me' (assistants) versus 'who I build for' (audience). The commonest design failure is arranging the supply side while never defining the demand side (§8.1)."
-      },
-      {
-        qZh: "「課程內容紮實、教師也盡力教了，但學生課後說完全不知道這門課對自己有什麼用」——最接近哪一種失敗？",
-        qEn: "'The course is solid and well taught, yet students leave saying they have no idea what it was for.' Which failure is this?",
-        optsZh: ["價值主張錯誤——做了沒人需要的課", "價值傳遞失敗——主張對，但沒有送到學生手上", "成本失控——投入超過產出", "評量效度不足——考題被 AI 破解"],
-        optsEn: ["A wrong value proposition — a course nobody needs", "A value-delivery failure — the claim was right but never reached the students", "Cost overrun — input exceeded output", "Assessment validity failure — AI defeated the exam"],
-        ans: A[1],
-        expZh: "價值主張與價值傳遞是兩個獨立失敗點：主張錯是做錯東西；主張對但沒傳遞到，學生沒接到——正是 Output ≠ Outcome 的商業版（§8.2）。",
-        expEn: "Proposition and delivery fail independently: a wrong claim builds the wrong thing; a right claim undelivered never reaches students — the commercial form of Output ≠ Outcome (§8.2)."
-      },
-      {
-        qZh: "把 Cost（備課、批改、工具訂閱的實際時數費用）納入課程設計視野，主要作用是？",
-        qEn: "What is the main effect of bringing Cost (actual hours and fees) into course design?",
-        optsZh: ["方便向學校申請經費補助", "證明教師工作辛勞", "降低學生的學費負擔", "讓「這個做法值不值得」變成可計算的取捨問題"],
-        optsEn: ["It supports funding applications", "It proves how hard teachers work", "It lowers tuition", "It turns 'is this approach worth it' into a computable trade-off"],
-        ans: A[3],
-        expZh: "沒有 Cost 變數，「提升 5% 成效但每週多十小時」與「提升 3% 但零成本」的取捨連問都問不出來（§8.2）。",
-        expEn: "Without the cost variable, the trade-off between '+5% at ten extra hours a week' and '+3% at no cost' cannot even be posed (§8.2)."
-      },
-      {
-        qZh: "同一門課對「後來才學會用 AI 的學生」有效、對新一屆卻失靈——依板書的解釋，關鍵在於？",
-        qEn: "A course works for students who later learned AI but fails the incoming cohort. The whiteboard's explanation?",
-        optsZh: ["AI-native 世代的預設起點不同：他們不是「學會用 AI 的人」，而是「一開始就有 AI 的人」", "新生的英語程度逐年下降", "新生不願意繳交作業", "教材的年份標示過時"],
-        optsEn: ["The AI-native generation starts from a different default: not people who learned AI, but people for whom AI was always there", "Freshmen's English declines yearly", "Freshmen refuse to submit work", "The textbook year is outdated"],
-        ans: A[0],
-        expZh: "這是目標客群屬性的結構性改變，差別在預設起點而非熟練度；針對前一種人設計的課程對後一種人往往失效（§8.3）。",
-        expEn: "A structural change in audience properties — a different default starting point, not a proficiency gap. Courses built for the former often fail the latter (§8.3)."
-      }
-    ]
-  },
-  {
-    id: "fundamentals",
-    titleZh: "基本功 ① × ② × ③",
-    titleEn: "Fundamentals: ① × ② × ③",
-    descZh: "乘法原則、Needs、Spec 與圖譜化、Feedback Loop（母 KB §9・板書 Page 3）",
-    descEn: "The multiplication rule, needs, spec and graph-ification, and the feedback loop.",
-    questions: [
-      {
-        qZh: "基本功寫成 ① × ② × ③（乘法）而非加法，意味著什麼？",
-        qEn: "Fundamentals are written as ① × ② × ③ — multiplied, not added. What does this mean?",
-        optsZh: ["三項的難度完全相同", "順序可以任意顛倒", "得分要以乘積計算", "任一項為零、整體即為零——三者互為前提，不可互相補償"],
-        optsEn: ["The three are equally difficult", "The order is interchangeable", "Scores multiply", "Any term at zero zeroes the whole — each is a precondition, none can compensate for another"],
-        ans: A[3],
-        expZh: "加法允許以強項補弱項；乘法不允許。需求抓錯、知識庫沒建、缺 Vibe Coding——任一歸零，整體歸零（§9）。",
-        expEn: "Addition lets a strong term offset a weak one; multiplication does not. Misread needs, no KB, or no vibe coding — any zero takes all to zero (§9)."
-      },
-      {
-        qZh: "① 取得需求中，Needs 被拆成哪兩個成分？",
-        qEn: "In needs acquisition, Needs splits into which two parts?",
-        optsZh: ["Pains（想擺脫的痛點）與 Gains（想獲得的好處）", "Input 與 Output", "成本與收益", "知識與技能"],
-        optsEn: ["Pains (what they want to escape) and Gains (what they want to obtain)", "Input and Output", "Cost and benefit", "Knowledge and skill"],
-        ans: A[0],
-        expZh: "Needs ＝ Pains ＋ Gains，且需求屬於目標客群（TA），不是教師的自我想像；Mentimeter Q2 就是這一步的實作（§9.1）。",
-        expEn: "Needs = Pains + Gains, and needs belong to the target audience, not the designer's imagination; Mentimeter Q2 is this step in action (§9.1)."
-      },
-      {
-        qZh: "在 KB.md → Spec → 圖譜化 × Schema 這條加工線上，「圖譜化 × Schema」負責解決哪個問題？",
-        qEn: "On the line KB.md → Spec → graph-ification × Schema, what problem does the last segment solve?",
-        optsZh: ["知識有沒有被留下來", "這一次要生成什麼", "AI 找不找得到——把概念連成關係網、把欄位型別描述清楚", "產出的視覺美感"],
-        optsEn: ["Whether knowledge is retained", "What to generate this time", "Whether AI can find it — wiring concepts into relations and describing fields and types", "The visual polish of the output"],
-        ans: A[2],
-        expZh: "KB.md 解決「有沒有留下來」、Spec 解決「要生成什麼」、圖譜化×Schema 解決「找不找得到」——這正是 §6.3「RAG 品質取決於結構化」的具體做法（§9.2）。",
-        expEn: "KB.md answers retention, Spec answers generation, graph-ification × Schema answers retrieval — the concrete form of §6.3's point about RAG and structure (§9.2)."
-      },
-      {
-        qZh: "Feedback Loop 把課程設計與課堂活動連回 ①，其實際效果是？",
-        qEn: "The feedback loop wires course design and classroom activity back to step ①. Its practical effect?",
-        optsZh: ["降低每次生成的 Token 消耗", "每跑完一輪，課堂活動產生新的需求訊號，下一輪的 ① 比上一輪更準", "自動完成作業評分", "減少教師的備課次數"],
-        optsEn: ["It lowers token consumption", "Each completed round yields fresh demand signals, so the next round's step ① is sharper than the last", "It grades homework automatically", "It reduces preparation sessions"],
-        ans: A[1],
-        expZh: "迴圈使流程自我改善：學生卡在哪、問了什麼、錯了什麼，就是下一輪 Needs 的最佳資料（§9.4）——這是 SDL 的教師版本。",
-        expEn: "The loop makes the process self-improving: where students got stuck is the best data for the next round of needs (§9.4) — the teacher's version of SDL."
-      },
-      {
-        qZh: "教師把課堂討論紀錄只當「教材素材」歸檔、不作其他用途——依板書架構，損失了什麼？",
-        qEn: "A teacher archives classroom-discussion records purely as teaching material. What is lost?",
-        optsZh: ["雲端儲存空間", "學生的著作權", "它作為上游「需求訊號」的那一半價值——Feedback Loop 被切斷", "教材的美觀排版"],
-        optsEn: ["Cloud storage space", "Students' copyright", "Half its value — the upstream demand signal — and the feedback loop is severed", "Nicely formatted materials"],
-        ans: A[2],
-        expZh: "課堂活動有雙重身分：往下游是素材、往上游是需求訊號；只取素材等於切斷 Feedback Loop，流程退回線性（§9.4）。",
-        expEn: "Classroom activity is both material (downstream) and demand signal (upstream); keeping only the former severs the loop and the process reverts to linear (§9.4)."
-      }
-    ]
-  },
-  {
-    id: "needs_audit",
-    titleZh: "現場需求盤點",
-    titleEn: "Coding the Room's Needs",
-    descZh: "兩軸編碼、L≠A、S-繞過 vs S-養成、痛點在閉合迴圈（母 KB §10）",
-    descEn: "Two-axis coding, L vs A, bypass vs build, and the closed-loop pain point.",
-    questions: [
-      {
-        qZh: "現場五色編碼作為即時工具有效，但其結構性問題是？",
-        qEn: "The live five-colour coding worked as an instant instrument, but its structural flaw was?",
-        optsZh: ["顏色數量不夠用", "學員看不懂顏色的意義", "四種不同的分類軸被壓進同一組顏色，導致半數項目必須塗兩色", "編碼的速度太慢"],
-        optsEn: ["Too few colours", "Participants could not read the colours", "Four different classification axes were squeezed into one colour set, forcing half the items into double-coding", "Coding was too slow"],
-        ans: A[2],
-        expZh: "討論／評量屬功能、素材屬資源、載體屬形式、領域屬內容——四軸壓一組顏色，類別彼此不互斥，只好多重編碼（§10.1）。",
-        expEn: "Function, resource, form and content are four orthogonal axes; compressed into one colour set, the categories were never mutually exclusive (§10.1)."
-      },
-      {
-        qZh: "「了解小組討論的參與度」為什麼不該歸入評量（A），而應獨立為學習歷程（L）？",
-        qEn: "Why must 'understanding participation in group discussion' be separated from assessment (A) into learning-process data (L)?",
-        optsZh: ["因為它不需要打分數", "評量是對 Output 下判斷，歷程是對 Process 做觀測——兩者屬不同構面", "因為資料量太大不好處理", "因為 Mentimeter 沒有這個功能"],
-        optsEn: ["Because it involves no grades", "Assessment judges Output while process data observes Process — different dimensions", "Because the data volume is unmanageable", "Because Mentimeter lacks the feature"],
-        ans: A[1],
-        expZh: "這正是 Output vs. Outcome 的分野在編碼上的展現；把歷程併入評量，等於把最貼近 Outcome 的需求藏進最傳統的類別（§10.1）。",
-        expEn: "This is the Output-versus-Outcome distinction expressed in coding; folding process into assessment buries the needs closest to Outcome inside the most traditional category (§10.1)."
-      },
-      {
-        qZh: "「即使不懂原理也直接用模型」與「循序漸進學會敏捷管理」被拆成 S-繞過與 S-養成，理由是？",
-        qEn: "'Using a model without understanding it' and 'progressively learning agile management' were split into S-bypass and S-build because?",
-        optsZh: ["兩者屬於不同學科領域", "提出的學員來自不同組別", "兩者的字數與具體度不同", "一者繞過學習（AI 當工程師）、一者產生學習（AI 當教練）——教學意涵相反，不可同類"],
-        optsEn: ["They belong to different disciplines", "They came from different groups", "They differ in length and detail", "One bypasses learning (AI as engineer), the other produces it (AI as coach) — pedagogically opposite, so they cannot share a category"],
-        ans: A[3],
-        expZh: "S-繞過對應 AI 工程師（跳過 K 直接執行 S）、S-養成對應 AI 教練（學習發生）；這對張力直指素養公式「跳過 K 算不算學會」（§10.3 發現三）。",
-        expEn: "Bypass maps to AI-as-engineer (skipping K to execute S); build maps to AI-as-coach (learning happens). The tension goes straight to the competency formula (§10.3, finding three)."
-      },
-      {
-        qZh: "「設計讓學生無法直接 copy-paste AI 答案的活動」應編入哪一類？",
-        qEn: "Where should 'an activity students cannot answer by copy-pasting from AI' be coded?",
-        optsZh: ["A 評量——這是 AI 時代的評量效度問題，不是互動設計", "D 討論互動——因為是課堂活動", "M 素材教材——因為要重新設計題目", "L 學習歷程——因為要記錄行為"],
-        optsEn: ["A Assessment — it is an assessment-validity question of the AI era, not interaction design", "D Discussion — it happens in class", "M Material — it means redesigning tasks", "L Process data — it records behaviour"],
-        ans: A[0],
-        expZh: "訴求是防捷徑的題目設計——當 K 免費供應，題目必須讓捷徑失效，否則評量失去鑑別力；屬評量效度，非互動（§10.1 第三項修正）。",
-        expEn: "The ask is shortcut-proof task design: with K freely supplied, tasks must defeat shortcuts or assessment loses discriminating power — validity, not interaction (§10.1)."
-      },
-      {
-        qZh: "12 則有效需求經兩軸編碼後，最重要的發現是？",
-        qEn: "After two-axis coding of the 12 valid responses, what was the principal finding?",
-        optsZh: ["教師最想要的是漂亮的教學網頁", "需求平均分佈於五個功能類別", "痛點在閉合迴圈：8 則落在 Process、只有 1 則是單純載體需求——教師要的是收、評、饋這一段", "多數教師抗拒使用 AI"],
-        optsEn: ["Teachers mostly want handsome web pages", "Needs spread evenly across five categories", "The pain is the closed loop: eight touch Process and only one is carrier-only — teachers want the collect-assess-feedback stretch", "Most teachers resist AI"],
-        ans: A[2],
-        expZh: "只有 1 則是「做一個網頁」；其餘跨越兩個以上 I-P-O 位置且集中於 Process。教師要的不是載體，是學生做完之後怎麼收、怎麼評、怎麼回饋（§10.3 發現一）——此發現已衍生出閉合迴圈設計指南。",
-        expEn: "Only one response was 'build a page'; the rest span multiple I-P-O positions, concentrated in Process. The need is the closed loop, not the carrier (§10.3, finding one) — the finding that spawned the closed-loop design guide."
-      }
-    ]
-  }
-];
+const TOPICS = [{
+  id: "definitions",
+  titleZh: "定義與心法",
+  titleEn: "Definitions & Mindset",
+  descZh: "Agentic AI、EMI/EML、educate 字源與素養公式（母 KB §1・§4）",
+  descEn: "Agentic AI, EMI/EML, the etymology of educate, and the competency formula.",
+  questions: [{
+    qZh: "板書將 Assistant 標註為「by order」，指的是哪一種運作型態？",
+    qEn: "The whiteboard labels Assistant as 'by order'. Which mode of operation does this describe?",
+    optsZh: ["自主拆解任務並連續執行到完成", "在人工作的過程中主動補完內容", "自行選擇並呼叫外部工具", "一個指令做一件事，做完即停等待下一個指令"],
+    optsEn: ["Decomposes tasks autonomously and runs to completion", "Proactively completes content while you work", "Selects and calls external tools by itself", "One order, one action — then stops and waits for the next order"],
+    ans: A[3],
+    expZh: "by order＝指令驅動：人下一個指令、AI 做一件事，人必須推動每一步（§1.1）。選項一是 Agentic AI、選項二是 Co-pilot 的特徵。",
+    expEn: "'By order' means command-driven: one order, one action, and the human pushes every step (§1.1). Option 1 describes Agentic AI; option 2 describes Co-pilot."
+  }, {
+    qZh: "依自主程度由低到高，三種協作型態的正確排序是？",
+    qEn: "Ranked from least to most autonomous, what is the correct order of the three collaboration modes?",
+    optsZh: ["Assistant → Co-pilot → Agentic AI", "Co-pilot → Assistant → Agentic AI", "Agentic AI → Co-pilot → Assistant", "Assistant → Agentic AI → Co-pilot"],
+    optsEn: ["Assistant → Co-pilot → Agentic AI", "Co-pilot → Assistant → Agentic AI", "Agentic AI → Co-pilot → Assistant", "Assistant → Agentic AI → Co-pilot"],
+    ans: A[0],
+    expZh: "光譜為 Assistant（by order）→ Co-pilot（協作建議）→ Agentic AI（承接意圖、自主代理）（§1.1）。往右讓渡越多判斷權，效率越高、過程掌握越少。",
+    expEn: "The spectrum runs Assistant (by order) → Co-pilot (suggests) → Agentic AI (takes an intention and acts autonomously) (§1.1). Moving right trades process visibility for efficiency."
+  }, {
+    qZh: "板書把 educate 拆為 e-duc-ate，用意是強調教育的本質是什麼？",
+    qEn: "The whiteboard splits educate into e-duc-ate. What essence of education does this emphasise?",
+    optsZh: ["「灌輸」——把知識注入學生腦中", "「引出」——把學生既有的東西引導、誘發、啟發出來", "「訓練」——反覆操作直到熟練", "「傳授」——由上而下給予標準答案"],
+    optsEn: ["'Instil' — pouring knowledge into students' heads", "'Draw out' — guiding, eliciting and inspiring what students already have", "'Drill' — repeated practice until fluent", "'Transmit' — handing down standard answers from above"],
+    ans: A[1],
+    expZh: "e-duc-ate 字源意義是「引出」：教育不是灌輸，而是引導、誘發、啟發（§1.3）。其餘三個選項都是「把東西放進去」的想像。",
+    expEn: "The root of e-duc-ate means 'to draw out': education is guidance, elicitation and inspiration, not transmission (§1.3). The other options all imagine putting something in."
+  }, {
+    qZh: "同一堂全英語授課的課，怎樣才算從 EMI 真正走進了 EML？",
+    qEn: "In the same English-taught class, what marks the real shift from EMI to EML?",
+    optsZh: ["教師全程以流利英語講授", "增加英語聽力測驗的比重", "學生必須用英語完成任務、討論並做出產出", "聘請外籍教師協同授課"],
+    optsEn: ["The teacher lectures fluently in English throughout", "More weight is given to English listening tests", "Students must use English to complete tasks, discuss and produce work", "A foreign co-teacher joins the course"],
+    ans: A[2],
+    expZh: "EMI 重心在 Instruction（教師的教），EML 重心在 Learning by Doing（學生做中學）；主體從教師換成學生才算進入 EML，終點是 SDL 自主學習（§1.2）。",
+    expEn: "EMI centres on instruction (the teacher teaching); EML centres on learning by doing. Only when the subject shifts to the student does EML begin, with SDL as the destination (§1.2)."
+  }, {
+    qZh: "素養公式 competency = f(K, S, A) 中，AI 時代相對權重上升的是哪些變數？為什麼？",
+    qEn: "In competency = f(K, S, A), which variables gain relative weight in the AI era, and why?",
+    optsZh: ["K——因為知識更新速度更快", "S 與 A——因為 K 的取得成本趨近於零，鑑別力下降", "三者權重不變——公式本來就是均衡的", "只有 A 上升——S 已被 AI 取代"],
+    optsEn: ["K — because knowledge now updates faster", "S and A — because the cost of acquiring K approaches zero, so K loses discriminating power", "None — the formula is balanced by design", "Only A — S has been replaced by AI"],
+    ans: A[1],
+    expZh: "當 AI 可以瞬間供應 K，K 的鑑別力下降，技能 S 與態度／價值觀 A 的相對重要性上升——這正是教師不可取代之處（§1.4）。",
+    expEn: "When AI supplies K instantly, K loses discriminating power and Skill plus Attitude rise in relative weight — precisely where teachers remain irreplaceable (§1.4)."
+  }]
+}, {
+  id: "ipo",
+  titleZh: "I-P-O 核心架構",
+  titleEn: "The I-P-O Architecture",
+  descZh: "Input–Process–Output–Outcome、三操作要素與整合流程（母 KB §2・§7）",
+  descEn: "Input–Process–Output–Outcome, the three operating elements, and the end-to-end flow.",
+  questions: [{
+    qZh: "「學生三秒鐘就能生出一份報告」之所以構成評量問題，關鍵在於？",
+    qEn: "Why does 'a student can generate a report in three seconds' create an assessment problem?",
+    optsZh: ["報告品質必然大幅下降", "學生會停止上課", "Output 已失去鑑別力，評量重心必須移往 Outcome", "AI 生成的內容必然有事實錯誤"],
+    optsEn: ["Report quality inevitably collapses", "Students will stop attending class", "Output has lost its discriminating power, so assessment must move to Outcome", "AI-generated content always contains factual errors"],
+    ans: A[2],
+    expZh: "Output 是交出去的東西、Outcome 是真正的改變；AI 讓 Output 變便宜，繼續只檢查 Output 等於在量一個已通膨的指標（§2.1）。",
+    expEn: "Output is what gets handed in; Outcome is the real change. AI makes Output cheap, so inspecting Output alone measures an inflated indicator (§2.1)."
+  }, {
+    qZh: "驅動整條 I-P-O 鏈的起點是什麼？",
+    qEn: "What drives the entire I-P-O chain?",
+    optsZh: ["工具堆疊的完整度", "資源庫存的多寡", "Context Window 的大小", "Intention（意圖）——再具體化為 Goal"],
+    optsEn: ["The completeness of the tool stack", "The size of the resource repository", "The size of the context window", "Intention — made concrete as a Goal"],
+    ans: A[3],
+    expZh: "一切從意圖出發：Intention → Goal → I-P-O；驅動鏈條的是意圖而非工具（§2.2 ①）。",
+    expEn: "Everything starts from intention: Intention → Goal → I-P-O. What drives the chain is intention, not tooling (§2.2)."
+  }, {
+    qZh: "教師對 AI 說「幫我做一個好看的教學網頁」，卻沒有提供任何課程內容——最可能的結果是？",
+    qEn: "A teacher tells AI 'make me a beautiful teaching page' but supplies no course content. The most likely result?",
+    optsZh: ["產出漂亮但與課程脫節的網頁——缺了 ② 資源，AI 只能憑空瞎編", "AI 拒絕執行並要求付費", "網頁做出來但無法開啟", "Token 立即耗盡導致中斷"],
+    optsEn: ["A handsome page disconnected from the course — with element ② missing, AI can only invent", "AI refuses and demands payment", "The page is built but will not open", "Tokens run out immediately"],
+    ans: A[0],
+    expZh: "三要素：① 意圖 ② 資源 ③ Vibe Coding。缺 ② 資源，AI 沒有情境依據，只能泛泛而談或憑空生成（§2.2）。",
+    expEn: "The three elements are ① intention ② resources ③ vibe coding. Without ②, AI has no grounding and can only generalise or invent (§2.2)."
+  }, {
+    qZh: "板書 Page 3 為整合流程補上的「頭」與「尾」分別是什麼？",
+    qEn: "What 'head' and 'tail' does whiteboard Page 3 add to the end-to-end flow?",
+    optsZh: ["頭：安裝工具；尾：成果發表會", "頭：需求來自 TA（學生）；尾：Feedback Loop 繞回需求", "頭：環境設定；尾：檔案備份", "頭：分組名單；尾：成績結算"],
+    optsEn: ["Head: installing tools; tail: a showcase event", "Head: needs obtained from the TA (students); tail: a feedback loop back to needs", "Head: environment setup; tail: file backup", "Head: group rosters; tail: grade computation"],
+    ans: A[1],
+    expZh: "Page 1/2 的流程是一條線；Page 3 補上頭（Intention 不是教師自訂，而是從 TA 取得 Needs）與尾（Feedback Loop 回到需求），整條流程變成迴圈（§7）。",
+    expEn: "Pages 1/2 draw a line; Page 3 adds the head (needs obtained from the TA, not set by the teacher) and the tail (a feedback loop back to needs), turning the line into a loop (§7)."
+  }, {
+    qZh: "常態分佈圖旁「看緣份／先不管 → 往前」代表哪一種務實的教學資源配置觀？",
+    qEn: "Next to the normal curve, 'leave the tails to fate → push forward' expresses which pragmatic view of teaching resources?",
+    optsZh: ["放棄後段班學生", "只栽培最前段的資優生", "兩端極端值難以短期撼動，把心力用於推動整條分佈前移", "把班級依能力重新分班"],
+    optsEn: ["Give up on the weakest students", "Cultivate only the strongest students", "The tails are hard to move in the short run — spend effort moving the whole distribution forward", "Re-stream the class by ability"],
+    ans: A[2],
+    expZh: "不是放棄任何人，而是承認資源有限：兩端受課堂外因素主導，邊際效益最高的投入是推動整體分佈前移（§1.4）。",
+    expEn: "Not abandonment but resource realism: the tails are dominated by out-of-class factors, so the highest-margin effort moves the whole curve forward (§1.4)."
+  }]
+}, {
+  id: "environment",
+  titleZh: "環境與工具",
+  titleEn: "Environment & Tools",
+  descZh: "第 0 步、輸入裝置與工具堆疊（母 KB §3）",
+  descEn: "Step zero, input devices, and the tool stack.",
+  questions: [{
+    qZh: "工作坊要求「課前先指定工作資料夾」，在整體架構上這個動作屬於？",
+    qEn: "The workshop asks teachers to designate a working folder before class. Where does this act sit in the architecture?",
+    optsZh: ["第 0 步環境——劃定一個 project 的邊界與 AI 的可見範圍", "① Intention——設定目標", "Output——整理產出檔案", "RAG——建立檢索索引"],
+    optsEn: ["Step-zero environment — defining the project boundary and AI's visible scope", "① Intention — setting the goal", "Output — organising deliverables", "RAG — building a retrieval index"],
+    ans: A[0],
+    expZh: "工作資料夾＝一個 project 的邊界，也是 AI 的可見範圍與協作記憶範圍；環境沒設好，後面的 I-P-O 無法落地（§3.1）。",
+    expEn: "The working folder is the project boundary and AI's visible, memorable scope. Without the environment, the I-P-O chain cannot land (§3.1)."
+  }, {
+    qZh: "環境設計標註「attention-based」，其教學意涵是？",
+    qEn: "The environment is annotated 'attention-based'. What is the pedagogical point?",
+    optsZh: ["應採用 Transformer 的注意力機制建模", "要求學生上課專心聽講", "加裝攝影機記錄學生的注意力", "注意力是課堂最稀缺的資源，環境決定它花在學習還是花在對抗介面"],
+    optsEn: ["Model the class with Transformer attention", "Require students to pay attention in class", "Install cameras to record attention", "Attention is the scarcest classroom resource; the environment decides whether it goes to learning or to fighting the interface"],
+    ans: A[3],
+    expZh: "裝置是否順暢、素材能否即時取得，直接決定學生要花多少心力對抗介面而非投入學習（§3.1）。",
+    expEn: "Whether devices run smoothly and material is instantly available decides how much effort students spend fighting the interface instead of learning (§3.1)."
+  }, {
+    qZh: "下列「輸入裝置 → 產出素材形式」的對應，何者正確？",
+    qEn: "Which device-to-material mapping is correct?",
+    optsZh: ["桌面攝影機 → video/audio", "Google Meet・Moodle/BBB → video/audio", "Timer → image/text", "桌面攝影機 → 節奏控制"],
+    optsEn: ["Desktop camera → video/audio", "Google Meet / Moodle (BBB) → video/audio", "Timer → image/text", "Desktop camera → pacing control"],
+    ans: A[1],
+    expZh: "桌面攝影機收 image/text（拍板書、拍手寫），Meet／Moodle(BBB) 收 video/audio（錄影錄音），Timer 管節奏（§3.2）。",
+    expEn: "The desktop camera captures image/text, Meet and Moodle (BBB) capture video/audio, and the timer controls pace (§3.2)."
+  }, {
+    qZh: "工具公式 tools = Σ APIs + MCP servers + Σ Skills 冠上 Σ（加總）的用意是？",
+    qEn: "Why does the tool formula carry Σ (summation) signs?",
+    optsZh: ["表示工具的授權成本會逐年累加", "表示需要一次購足所有工具", "能力是可累加的資產——每加一項，之後所有專案都受益", "純粹是數學記號的美觀"],
+    optsEn: ["Licensing costs accumulate year by year", "All tools must be bought at once", "Capability is a cumulative asset — each addition benefits every later project", "It simply looks mathematical"],
+    ans: A[2],
+    expZh: "Σ 強調能力可累加、投資報酬隨時間放大：Skills 做一次、每學期複用（§3.3）。",
+    expEn: "Σ stresses that capability accumulates and returns compound: build a skill once, reuse it every term (§3.3)."
+  }, {
+    qZh: "教師想讓 AI 直接讀取學校 Moodle 上的課程資料，最對應工具堆疊中的哪一項？",
+    qEn: "A teacher wants AI to read course data on the school's Moodle directly. Which part of the tool stack does this correspond to?",
+    optsZh: ["MCP servers——把外部系統掛進 AI 的標準接法", "Σ Skills——可重複使用的做法封裝", "Timer——輸入裝置", "SVG——可視化產出"],
+    optsEn: ["MCP servers — the standard way to plug external systems into AI", "Σ Skills — reusable packaged methods", "Timer — an input device", "SVG — a visual output"],
+    ans: A[0],
+    expZh: "MCP（Model Context Protocol）是把外部系統（如 LMS）掛進 AI 的標準接法，等於為 AI 裝上可插拔的手腳（§3.3）。",
+    expEn: "MCP is the standard protocol for plugging external systems such as an LMS into AI — pluggable hands and feet (§3.3)."
+  }]
+}, {
+  id: "method",
+  titleZh: "心法手法與素材流",
+  titleEn: "Mindset, Method & Material Flow",
+  descZh: "AI 三角色、課堂組織、收斂為文字與四階產出鏈（母 KB §4・§5）",
+  descEn: "The three AI roles, classroom organisation, converging on text, and the four-stage chain.",
+  questions: [{
+    qZh: "學生把期末報告題目丟給 AI 直接生成全文繳交——此時 AI 扮演的角色與教學後果是？",
+    qEn: "A student feeds the final-report topic to AI and submits the generated text. Which role is AI playing, with what consequence?",
+    optsZh: ["教練——學習被加速", "管家——時間被釋放給高階思考", "工程師——產出存在，但學習消失", "引導者——SDL 自主學習發生"],
+    optsEn: ["Coach — learning accelerates", "Butler — time is freed for higher-order thinking", "Engineer — the artefact exists, but learning disappears", "Facilitator — SDL takes place"],
+    ans: A[2],
+    expZh: "工程師角色直接把構想造成成品；用在學生作業上，產出存在但學習過程被跳過（§4.1）。教練陪練、管家處理雜務，兩者不代替學生完成。",
+    expEn: "The engineer role builds the artefact directly; applied to student work, the output exists but learning is skipped (§4.1). Coach and butler do not complete the work for the student."
+  }, {
+    qZh: "「自作 ✕ 協作」的課堂組織下，教師角色發生什麼轉變？",
+    qEn: "Under 'individual work × collaboration', how does the teacher's role change?",
+    optsZh: ["從 Lecture 者轉為引導者", "從引導者轉為講授者", "從教學者轉為評分者", "從課程設計者轉為旁觀者"],
+    optsEn: ["From lecturer to facilitator", "From facilitator to lecturer", "From teacher to grader", "From designer to bystander"],
+    ans: A[0],
+    expZh: "小組編制（每組約 5 人）配合自作×協作，教師從 Lecture 者轉為引導者（§4.3）——呼應 educate＝引出。",
+    expEn: "With five-person groups combining individual and collaborative work, the teacher shifts from lecturer to facilitator (§4.3) — echoing educate = draw out."
+  }, {
+    qZh: "為什麼手法的第 ⓪ 步是「把所有模態先收斂為文字」？",
+    qEn: "Why is step ⓪ of the method 'converge every modality into text first'?",
+    optsZh: ["因為文字檔案體積最小", "因為學生偏好閱讀文字", "因為影音檔案無法長期保存", "因為文字是 AI 處理成本最低、最易檢索與版本控制的形式"],
+    optsEn: ["Text files are smallest", "Students prefer reading text", "Audio and video cannot be preserved", "Text is the cheapest form for AI to process, retrieve and version-control"],
+    ans: A[3],
+    expZh: "語音、圖像（OCR）、影片全部轉成文字後，AI 才好處理；文字也最容易檢索與版本控制（§5.1）。",
+    expEn: "Speech, images (via OCR) and video all convert to text so AI can process them; text is also easiest to retrieve and version (§5.1)."
+  }, {
+    qZh: "「給 AI 看」與「給人看」分別對應哪組格式？",
+    qEn: "Which format pair corresponds to 'for AI' versus 'for humans'?",
+    optsZh: ["Markdown（.md）↔ SVG／SPA／PWA", "PDF ↔ Word", "SPA ↔ Markdown（.md）", "影片 ↔ 投影片"],
+    optsEn: ["Markdown (.md) ↔ SVG / SPA / PWA", "PDF ↔ Word", "SPA ↔ Markdown (.md)", "Video ↔ Slides"],
+    ans: A[0],
+    expZh: ".md 是給 AI 讀的結構化母版；SVG／SPA／PWA 是從母版派生、給人看的可視化呈現層（§5.2・§5.3）。",
+    expEn: ".md is the structured master for AI; SVG, SPA and PWA are human-facing presentation layers derived from it (§5.2, §5.3)."
+  }, {
+    qZh: "依四階產出鏈的邏輯，教師的心力應優先投在哪裡？為什麼？",
+    qEn: "By the logic of the four-stage chain, where should a teacher invest effort first, and why?",
+    optsZh: ["SPA 的動畫與美編——第一印象最重要", "KB(.md) 母版——母版夠結構化，SVG/SPA/PWA 都能由 AI 派生，呈現層是可拋棄的", "PWA 的安裝流程——確保學生裝得起來", "SVG 的配色——視覺一致性優先"],
+    optsEn: ["SPA animation and styling — first impressions matter most", "The KB (.md) master — with a structured master, SVG/SPA/PWA can all be derived by AI; presentation layers are disposable", "The PWA install flow — make sure students can install it", "SVG colour schemes — visual consistency first"],
+    ans: A[1],
+    expZh: "價值集中在母版：.md 夠結構化，三種呈現層都能隨時重新派生；直接經營呈現層，內容就被鎖死在單一形式（§5.3）。",
+    expEn: "Value sits in the master: with a structured .md, every presentation layer can be re-derived at will; investing in the layer locks content into one form (§5.3)."
+  }]
+}, {
+  id: "memory",
+  titleZh: "記憶與情境管理",
+  titleEn: "Memory & Context",
+  descZh: "長短期記憶、三層作用域、Token 經濟學與 RAG（母 KB §6）",
+  descEn: "Memory timescales, the three scopes, token economics and RAG.",
+  questions: [{
+    qZh: "一段很有價值的課堂討論，若只停留在當次 AI 對話（session）中，結局是？",
+    qEn: "A valuable classroom discussion stays only in the current AI session. What happens to it?",
+    optsZh: ["AI 會自動永久記住", "隨 session 結束而消失——必須寫進 .md 才轉為長期記憶", "自動同步到雲端硬碟", "轉存為語音檔保留"],
+    optsEn: ["AI remembers it permanently", "It vanishes when the session ends — it must be written into .md to become long-term memory", "It syncs to cloud storage automatically", "It is preserved as an audio file"],
+    ans: A[1],
+    expZh: "短期記憶只活在 session 內；寫成 Markdown 知識庫＝把短期記憶轉為長期記憶（§6.1）。",
+    expEn: "Short-term memory lives only inside the session; writing a Markdown KB converts it into long-term memory (§6.1)."
+  }, {
+    qZh: "「所有專案都適用的個人寫作風格偏好」應該放在三層作用域的哪一層？",
+    qEn: "Where should 'personal writing-style preferences that apply to every project' live among the three scopes?",
+    optsZh: ["Session——對話回合", "專案——工作資料夾", "全域——claude.md", "不必儲存，每次重新告知即可"],
+    optsEn: ["Session — the conversation turn", "Project — the working folder", "Global — claude.md", "Nowhere; restate it each time"],
+    ans: A[2],
+    expZh: "三層依變動頻率分配：越不常變的放越上層。跨專案通用的偏好屬全域 claude.md；專案專用規則寫進全域會污染其他專案（§6.2）。",
+    expEn: "Scopes are layered by rate of change: the less it changes, the higher it lives. Cross-project preferences belong in global claude.md (§6.2)."
+  }, {
+    qZh: "「Token 經濟學」這門帳之所以存在，根本原因是？",
+    qEn: "Why does 'token economics' exist at all?",
+    optsZh: ["AI 服務按月訂閱收費", "Token 的市場價格會波動", "模型參數數量太龐大", "Context Window 容量有限——稀缺才有經濟學"],
+    optsEn: ["AI services charge monthly", "Token prices fluctuate", "Models have too many parameters", "The context window is finite — scarcity is what creates economics"],
+    ans: A[3],
+    expZh: "Context Window 是稀缺資源，必須決定「什麼直接放入、什麼外掛」——稀缺才有經濟學（§6.3）。",
+    expEn: "The context window is scarce, forcing choices about what goes in directly and what is externalised — scarcity creates economics (§6.3)."
+  }, {
+    qZh: "RAG（檢索增強生成）的作用機制是？",
+    qEn: "How does RAG (retrieval-augmented generation) work?",
+    optsZh: ["直接擴大模型的參數量", "資料外置，需要時檢索相關片段送入——變相擴充 Context Window", "把文字壓縮成更少的 token", "以快取記住上一次的對話"],
+    optsEn: ["It enlarges the model's parameters", "Data lives outside; relevant fragments are retrieved and fed in on demand — effectively expanding the context window", "It compresses text into fewer tokens", "It caches the previous conversation"],
+    ans: A[1],
+    expZh: "RAG 讓大量資料存放在 Context Window 之外，需要時才檢索片段送入，等於擴充稀缺資源（§6.3）。",
+    expEn: "RAG stores bulk data outside the window and retrieves fragments on demand — a way of expanding the scarce resource (§6.3)."
+  }, {
+    qZh: "甲老師的知識庫是結構化 .md，乙老師是雜亂的講義掃描檔。兩人同樣用 RAG，效果差異的關鍵是？",
+    qEn: "Teacher A keeps a structured .md KB; teacher B keeps messy scanned handouts. Both use RAG. What decides the difference?",
+    optsZh: ["兩人使用的模型版本", "網路連線速度", "檔案總大小", "檢索品質取決於外部資料的結構化程度——知識庫是 RAG 的燃料"],
+    optsEn: ["Their model versions", "Network speed", "Total file size", "Retrieval quality depends on how structured the external data is — the KB is RAG's fuel"],
+    ans: A[3],
+    expZh: "RAG 的檢索品質取決於外部資料的結構化程度；知識庫（.md）既是長期記憶的載體，也是讓 RAG 有效的前提（§6.3）。",
+    expEn: "RAG retrieval quality depends on the structure of the external data; the .md KB is both the vessel of long-term memory and the precondition for effective RAG (§6.3)."
+  }]
+}, {
+  id: "pm",
+  titleZh: "教授即產品經理",
+  titleEn: "The Professor as PM",
+  descZh: "PM/PjM、TA 雙關、價值主張與傳遞、AI-native（母 KB §8・板書 Page 3）",
+  descEn: "PM/PjM, the TA pun, value proposition and delivery, and the AI-native generation.",
+  questions: [{
+    qZh: "教授同時被對位為 PM（產品經理）與 PjM（專案經理），兩個角色在教學工作上的分工是？",
+    qEn: "The professor maps to both PM and PjM. How do the two roles divide teaching work?",
+    optsZh: ["PM 管人事、PjM 管預算", "學期初決定課綱教材與評量（PM）；學期中控進度、協調助教、處理突發（PjM）", "PM 是正教授、PjM 是助理教授", "兩者是同一件事的不同稱呼"],
+    optsEn: ["PM handles people, PjM handles budget", "Setting syllabus, materials and assessment at term start (PM); managing pace, assistants and surprises mid-term (PjM)", "PM means full professor, PjM assistant professor", "They are two names for the same thing"],
+    ans: A[1],
+    expZh: "PM 決定做什麼、為誰做、為何值得；PjM 在期限與資源內把它做出來。教師在學期初是 PM、學期中是 PjM（§8.1）。",
+    expEn: "PM owns what, for whom and why; PjM owns delivery within constraints. Teachers act as PM at term start and PjM through the term (§8.1)."
+  }, {
+    qZh: "板書刻意讓 TA 這個縮寫出現在管線兩端，它的雙關是？",
+    qEn: "The whiteboard deliberately places 'TA' at both ends of the pipeline. What is the pun?",
+    optsZh: ["Teaching Award 與 Target Audience", "Teaching Activity 與 Target Answer", "供給端 Σ TA＝Teaching Assistant（助教／資源）；需求端圈起的 TA＝Target Audience（學生／對象）", "兩端都指助教"],
+    optsEn: ["Teaching Award and Target Audience", "Teaching Activity and Target Answer", "Supply side Σ TA = Teaching Assistants (a resource); demand side circled TA = Target Audience (the students served)", "Both mean teaching assistants"],
+    ans: A[2],
+    expZh: "同一縮寫，一端是「誰跟我一起做」（助教），一端是「我做給誰」（目標客群）。教學設計最常見的失誤是只經營供給端、從未認真定義需求端（§8.1）。",
+    expEn: "One abbreviation: 'who builds with me' (assistants) versus 'who I build for' (audience). The commonest design failure is arranging the supply side while never defining the demand side (§8.1)."
+  }, {
+    qZh: "「課程內容紮實、教師也盡力教了，但學生課後說完全不知道這門課對自己有什麼用」——最接近哪一種失敗？",
+    qEn: "'The course is solid and well taught, yet students leave saying they have no idea what it was for.' Which failure is this?",
+    optsZh: ["價值主張錯誤——做了沒人需要的課", "價值傳遞失敗——主張對，但沒有送到學生手上", "成本失控——投入超過產出", "評量效度不足——考題被 AI 破解"],
+    optsEn: ["A wrong value proposition — a course nobody needs", "A value-delivery failure — the claim was right but never reached the students", "Cost overrun — input exceeded output", "Assessment validity failure — AI defeated the exam"],
+    ans: A[1],
+    expZh: "價值主張與價值傳遞是兩個獨立失敗點：主張錯是做錯東西；主張對但沒傳遞到，學生沒接到——正是 Output ≠ Outcome 的商業版（§8.2）。",
+    expEn: "Proposition and delivery fail independently: a wrong claim builds the wrong thing; a right claim undelivered never reaches students — the commercial form of Output ≠ Outcome (§8.2)."
+  }, {
+    qZh: "把 Cost（備課、批改、工具訂閱的實際時數費用）納入課程設計視野，主要作用是？",
+    qEn: "What is the main effect of bringing Cost (actual hours and fees) into course design?",
+    optsZh: ["方便向學校申請經費補助", "證明教師工作辛勞", "降低學生的學費負擔", "讓「這個做法值不值得」變成可計算的取捨問題"],
+    optsEn: ["It supports funding applications", "It proves how hard teachers work", "It lowers tuition", "It turns 'is this approach worth it' into a computable trade-off"],
+    ans: A[3],
+    expZh: "沒有 Cost 變數，「提升 5% 成效但每週多十小時」與「提升 3% 但零成本」的取捨連問都問不出來（§8.2）。",
+    expEn: "Without the cost variable, the trade-off between '+5% at ten extra hours a week' and '+3% at no cost' cannot even be posed (§8.2)."
+  }, {
+    qZh: "同一門課對「後來才學會用 AI 的學生」有效、對新一屆卻失靈——依板書的解釋，關鍵在於？",
+    qEn: "A course works for students who later learned AI but fails the incoming cohort. The whiteboard's explanation?",
+    optsZh: ["AI-native 世代的預設起點不同：他們不是「學會用 AI 的人」，而是「一開始就有 AI 的人」", "新生的英語程度逐年下降", "新生不願意繳交作業", "教材的年份標示過時"],
+    optsEn: ["The AI-native generation starts from a different default: not people who learned AI, but people for whom AI was always there", "Freshmen's English declines yearly", "Freshmen refuse to submit work", "The textbook year is outdated"],
+    ans: A[0],
+    expZh: "這是目標客群屬性的結構性改變，差別在預設起點而非熟練度；針對前一種人設計的課程對後一種人往往失效（§8.3）。",
+    expEn: "A structural change in audience properties — a different default starting point, not a proficiency gap. Courses built for the former often fail the latter (§8.3)."
+  }]
+}, {
+  id: "fundamentals",
+  titleZh: "基本功 ① × ② × ③",
+  titleEn: "Fundamentals: ① × ② × ③",
+  descZh: "乘法原則、Needs、Spec 與圖譜化、Feedback Loop（母 KB §9・板書 Page 3）",
+  descEn: "The multiplication rule, needs, spec and graph-ification, and the feedback loop.",
+  questions: [{
+    qZh: "基本功寫成 ① × ② × ③（乘法）而非加法，意味著什麼？",
+    qEn: "Fundamentals are written as ① × ② × ③ — multiplied, not added. What does this mean?",
+    optsZh: ["三項的難度完全相同", "順序可以任意顛倒", "得分要以乘積計算", "任一項為零、整體即為零——三者互為前提，不可互相補償"],
+    optsEn: ["The three are equally difficult", "The order is interchangeable", "Scores multiply", "Any term at zero zeroes the whole — each is a precondition, none can compensate for another"],
+    ans: A[3],
+    expZh: "加法允許以強項補弱項；乘法不允許。需求抓錯、知識庫沒建、缺 Vibe Coding——任一歸零，整體歸零（§9）。",
+    expEn: "Addition lets a strong term offset a weak one; multiplication does not. Misread needs, no KB, or no vibe coding — any zero takes all to zero (§9)."
+  }, {
+    qZh: "① 取得需求中，Needs 被拆成哪兩個成分？",
+    qEn: "In needs acquisition, Needs splits into which two parts?",
+    optsZh: ["Pains（想擺脫的痛點）與 Gains（想獲得的好處）", "Input 與 Output", "成本與收益", "知識與技能"],
+    optsEn: ["Pains (what they want to escape) and Gains (what they want to obtain)", "Input and Output", "Cost and benefit", "Knowledge and skill"],
+    ans: A[0],
+    expZh: "Needs ＝ Pains ＋ Gains，且需求屬於目標客群（TA），不是教師的自我想像；Mentimeter Q2 就是這一步的實作（§9.1）。",
+    expEn: "Needs = Pains + Gains, and needs belong to the target audience, not the designer's imagination; Mentimeter Q2 is this step in action (§9.1)."
+  }, {
+    qZh: "在 KB.md → Spec → 圖譜化 × Schema 這條加工線上，「圖譜化 × Schema」負責解決哪個問題？",
+    qEn: "On the line KB.md → Spec → graph-ification × Schema, what problem does the last segment solve?",
+    optsZh: ["知識有沒有被留下來", "這一次要生成什麼", "AI 找不找得到——把概念連成關係網、把欄位型別描述清楚", "產出的視覺美感"],
+    optsEn: ["Whether knowledge is retained", "What to generate this time", "Whether AI can find it — wiring concepts into relations and describing fields and types", "The visual polish of the output"],
+    ans: A[2],
+    expZh: "KB.md 解決「有沒有留下來」、Spec 解決「要生成什麼」、圖譜化×Schema 解決「找不找得到」——這正是 §6.3「RAG 品質取決於結構化」的具體做法（§9.2）。",
+    expEn: "KB.md answers retention, Spec answers generation, graph-ification × Schema answers retrieval — the concrete form of §6.3's point about RAG and structure (§9.2)."
+  }, {
+    qZh: "Feedback Loop 把課程設計與課堂活動連回 ①，其實際效果是？",
+    qEn: "The feedback loop wires course design and classroom activity back to step ①. Its practical effect?",
+    optsZh: ["降低每次生成的 Token 消耗", "每跑完一輪，課堂活動產生新的需求訊號，下一輪的 ① 比上一輪更準", "自動完成作業評分", "減少教師的備課次數"],
+    optsEn: ["It lowers token consumption", "Each completed round yields fresh demand signals, so the next round's step ① is sharper than the last", "It grades homework automatically", "It reduces preparation sessions"],
+    ans: A[1],
+    expZh: "迴圈使流程自我改善：學生卡在哪、問了什麼、錯了什麼，就是下一輪 Needs 的最佳資料（§9.4）——這是 SDL 的教師版本。",
+    expEn: "The loop makes the process self-improving: where students got stuck is the best data for the next round of needs (§9.4) — the teacher's version of SDL."
+  }, {
+    qZh: "教師把課堂討論紀錄只當「教材素材」歸檔、不作其他用途——依板書架構，損失了什麼？",
+    qEn: "A teacher archives classroom-discussion records purely as teaching material. What is lost?",
+    optsZh: ["雲端儲存空間", "學生的著作權", "它作為上游「需求訊號」的那一半價值——Feedback Loop 被切斷", "教材的美觀排版"],
+    optsEn: ["Cloud storage space", "Students' copyright", "Half its value — the upstream demand signal — and the feedback loop is severed", "Nicely formatted materials"],
+    ans: A[2],
+    expZh: "課堂活動有雙重身分：往下游是素材、往上游是需求訊號；只取素材等於切斷 Feedback Loop，流程退回線性（§9.4）。",
+    expEn: "Classroom activity is both material (downstream) and demand signal (upstream); keeping only the former severs the loop and the process reverts to linear (§9.4)."
+  }]
+}, {
+  id: "needs_audit",
+  titleZh: "現場需求盤點",
+  titleEn: "Coding the Room's Needs",
+  descZh: "兩軸編碼、L≠A、S-繞過 vs S-養成、痛點在閉合迴圈（母 KB §10）",
+  descEn: "Two-axis coding, L vs A, bypass vs build, and the closed-loop pain point.",
+  questions: [{
+    qZh: "現場五色編碼作為即時工具有效，但其結構性問題是？",
+    qEn: "The live five-colour coding worked as an instant instrument, but its structural flaw was?",
+    optsZh: ["顏色數量不夠用", "學員看不懂顏色的意義", "四種不同的分類軸被壓進同一組顏色，導致半數項目必須塗兩色", "編碼的速度太慢"],
+    optsEn: ["Too few colours", "Participants could not read the colours", "Four different classification axes were squeezed into one colour set, forcing half the items into double-coding", "Coding was too slow"],
+    ans: A[2],
+    expZh: "討論／評量屬功能、素材屬資源、載體屬形式、領域屬內容——四軸壓一組顏色，類別彼此不互斥，只好多重編碼（§10.1）。",
+    expEn: "Function, resource, form and content are four orthogonal axes; compressed into one colour set, the categories were never mutually exclusive (§10.1)."
+  }, {
+    qZh: "「了解小組討論的參與度」為什麼不該歸入評量（A），而應獨立為學習歷程（L）？",
+    qEn: "Why must 'understanding participation in group discussion' be separated from assessment (A) into learning-process data (L)?",
+    optsZh: ["因為它不需要打分數", "評量是對 Output 下判斷，歷程是對 Process 做觀測——兩者屬不同構面", "因為資料量太大不好處理", "因為 Mentimeter 沒有這個功能"],
+    optsEn: ["Because it involves no grades", "Assessment judges Output while process data observes Process — different dimensions", "Because the data volume is unmanageable", "Because Mentimeter lacks the feature"],
+    ans: A[1],
+    expZh: "這正是 Output vs. Outcome 的分野在編碼上的展現；把歷程併入評量，等於把最貼近 Outcome 的需求藏進最傳統的類別（§10.1）。",
+    expEn: "This is the Output-versus-Outcome distinction expressed in coding; folding process into assessment buries the needs closest to Outcome inside the most traditional category (§10.1)."
+  }, {
+    qZh: "「即使不懂原理也直接用模型」與「循序漸進學會敏捷管理」被拆成 S-繞過與 S-養成，理由是？",
+    qEn: "'Using a model without understanding it' and 'progressively learning agile management' were split into S-bypass and S-build because?",
+    optsZh: ["兩者屬於不同學科領域", "提出的學員來自不同組別", "兩者的字數與具體度不同", "一者繞過學習（AI 當工程師）、一者產生學習（AI 當教練）——教學意涵相反，不可同類"],
+    optsEn: ["They belong to different disciplines", "They came from different groups", "They differ in length and detail", "One bypasses learning (AI as engineer), the other produces it (AI as coach) — pedagogically opposite, so they cannot share a category"],
+    ans: A[3],
+    expZh: "S-繞過對應 AI 工程師（跳過 K 直接執行 S）、S-養成對應 AI 教練（學習發生）；這對張力直指素養公式「跳過 K 算不算學會」（§10.3 發現三）。",
+    expEn: "Bypass maps to AI-as-engineer (skipping K to execute S); build maps to AI-as-coach (learning happens). The tension goes straight to the competency formula (§10.3, finding three)."
+  }, {
+    qZh: "「設計讓學生無法直接 copy-paste AI 答案的活動」應編入哪一類？",
+    qEn: "Where should 'an activity students cannot answer by copy-pasting from AI' be coded?",
+    optsZh: ["A 評量——這是 AI 時代的評量效度問題，不是互動設計", "D 討論互動——因為是課堂活動", "M 素材教材——因為要重新設計題目", "L 學習歷程——因為要記錄行為"],
+    optsEn: ["A Assessment — it is an assessment-validity question of the AI era, not interaction design", "D Discussion — it happens in class", "M Material — it means redesigning tasks", "L Process data — it records behaviour"],
+    ans: A[0],
+    expZh: "訴求是防捷徑的題目設計——當 K 免費供應，題目必須讓捷徑失效，否則評量失去鑑別力；屬評量效度，非互動（§10.1 第三項修正）。",
+    expEn: "The ask is shortcut-proof task design: with K freely supplied, tasks must defeat shortcuts or assessment loses discriminating power — validity, not interaction (§10.1)."
+  }, {
+    qZh: "12 則有效需求經兩軸編碼後，最重要的發現是？",
+    qEn: "After two-axis coding of the 12 valid responses, what was the principal finding?",
+    optsZh: ["教師最想要的是漂亮的教學網頁", "需求平均分佈於五個功能類別", "痛點在閉合迴圈：8 則落在 Process、只有 1 則是單純載體需求——教師要的是收、評、饋這一段", "多數教師抗拒使用 AI"],
+    optsEn: ["Teachers mostly want handsome web pages", "Needs spread evenly across five categories", "The pain is the closed loop: eight touch Process and only one is carrier-only — teachers want the collect-assess-feedback stretch", "Most teachers resist AI"],
+    ans: A[2],
+    expZh: "只有 1 則是「做一個網頁」；其餘跨越兩個以上 I-P-O 位置且集中於 Process。教師要的不是載體，是學生做完之後怎麼收、怎麼評、怎麼回饋（§10.3 發現一）——此發現已衍生出閉合迴圈設計指南。",
+    expEn: "Only one response was 'build a page'; the rest span multiple I-P-O positions, concentrated in Process. The need is the closed loop, not the carrier (§10.3, finding one) — the finding that spawned the closed-loop design guide."
+  }]
+}];
 const TOTAL_Q = TOPICS.reduce((s, t) => s + t.questions.length, 0);
 
 // ============================================================
 // Icons (inline SVG)
 // ============================================================
 const Icon = {
-  Home: ({size=18}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>,
-  Dashboard: ({size=18}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>,
-  User: ({size=18}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
-  Moon: ({size=18}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>,
-  Sun: ({size=18}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>,
-  Download: ({size=18}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
-  Refresh: ({size=16}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>,
+  Home: ({
+    size = 18
+  }) => /*#__PURE__*/React.createElement("svg", {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: "9 22 9 12 15 12 15 22"
+  })),
+  Dashboard: ({
+    size = 18
+  }) => /*#__PURE__*/React.createElement("svg", {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  }, /*#__PURE__*/React.createElement("rect", {
+    x: "3",
+    y: "3",
+    width: "7",
+    height: "9"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "14",
+    y: "3",
+    width: "7",
+    height: "5"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "14",
+    y: "12",
+    width: "7",
+    height: "9"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "3",
+    y: "16",
+    width: "7",
+    height: "5"
+  })),
+  User: ({
+    size = 18
+  }) => /*#__PURE__*/React.createElement("svg", {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
+  }), /*#__PURE__*/React.createElement("circle", {
+    cx: "12",
+    cy: "7",
+    r: "4"
+  })),
+  Moon: ({
+    size = 18
+  }) => /*#__PURE__*/React.createElement("svg", {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+  })),
+  Sun: ({
+    size = 18
+  }) => /*#__PURE__*/React.createElement("svg", {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  }, /*#__PURE__*/React.createElement("circle", {
+    cx: "12",
+    cy: "12",
+    r: "5"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "12",
+    y1: "1",
+    x2: "12",
+    y2: "3"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "12",
+    y1: "21",
+    x2: "12",
+    y2: "23"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "4.22",
+    y1: "4.22",
+    x2: "5.64",
+    y2: "5.64"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "18.36",
+    y1: "18.36",
+    x2: "19.78",
+    y2: "19.78"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "1",
+    y1: "12",
+    x2: "3",
+    y2: "12"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "21",
+    y1: "12",
+    x2: "23",
+    y2: "12"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "4.22",
+    y1: "19.78",
+    x2: "5.64",
+    y2: "18.36"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "18.36",
+    y1: "5.64",
+    x2: "19.78",
+    y2: "4.22"
+  })),
+  Download: ({
+    size = 18
+  }) => /*#__PURE__*/React.createElement("svg", {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: "7 10 12 15 17 10"
+  }), /*#__PURE__*/React.createElement("line", {
+    x1: "12",
+    y1: "15",
+    x2: "12",
+    y2: "3"
+  })),
+  Refresh: ({
+    size = 16
+  }) => /*#__PURE__*/React.createElement("svg", {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  }, /*#__PURE__*/React.createElement("polyline", {
+    points: "23 4 23 10 17 10"
+  }), /*#__PURE__*/React.createElement("polyline", {
+    points: "1 20 1 14 7 14"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
+  }))
 };
 
 // ============================================================
@@ -690,69 +808,143 @@ function loadState() {
   try {
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return defaultState();
-    return { ...defaultState(), ...JSON.parse(raw) };
-  } catch (e) { return defaultState(); }
+    return {
+      ...defaultState(),
+      ...JSON.parse(raw)
+    };
+  } catch (e) {
+    return defaultState();
+  }
 }
 function defaultState() {
   return {
-    profile: { name: "", studentId: "", email: "", group: "" },
+    profile: {
+      name: "",
+      studentId: "",
+      email: "",
+      group: ""
+    },
     theme: "dark",
     attempts: {},
-    sessions: [],
+    sessions: []
   };
 }
-function saveState(s) { try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch (e) {} }
+function saveState(s) {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(s));
+  } catch (e) {}
+}
 
 // ============================================================
 // Bilingual helper — 永遠中英並陳
 // ============================================================
-function Bi({ zh, en, primary='zh', sizeZh='text-base', sizeEn='text-sm', muteEn=true, className='' }) {
+function Bi({
+  zh,
+  en,
+  primary = 'zh',
+  sizeZh = 'text-base',
+  sizeEn = 'text-sm',
+  muteEn = true,
+  className = ''
+}) {
   if (!zh && !en) return null;
   if (primary === 'zh') {
-    return (
-      <div className={className}>
-        {zh && <div className={`${sizeZh}`}>{zh}</div>}
-        {en && <div className={`${sizeEn} ${muteEn ? 'opacity-70 italic' : ''} mt-0.5`}>{en}</div>}
-      </div>
-    );
+    return /*#__PURE__*/React.createElement("div", {
+      className: className
+    }, zh && /*#__PURE__*/React.createElement("div", {
+      className: `${sizeZh}`
+    }, zh), en && /*#__PURE__*/React.createElement("div", {
+      className: `${sizeEn} ${muteEn ? 'opacity-70 italic' : ''} mt-0.5`
+    }, en));
   }
-  return (
-    <div className={className}>
-      {en && <div className={`${sizeZh}`}>{en}</div>}
-      {zh && <div className={`${sizeEn} ${muteEn ? 'opacity-70' : ''} mt-0.5`}>{zh}</div>}
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    className: className
+  }, en && /*#__PURE__*/React.createElement("div", {
+    className: `${sizeZh}`
+  }, en), zh && /*#__PURE__*/React.createElement("div", {
+    className: `${sizeEn} ${muteEn ? 'opacity-70' : ''} mt-0.5`
+  }, zh));
 }
 
 // ============================================================
 // Error Boundary — 防白屏
 // ============================================================
 class ErrorBoundary extends React.Component {
-  constructor(props) { super(props); this.state = { error: null }; }
-  static getDerivedStateFromError(error) { return { error }; }
-  componentDidCatch(error, info) { console.error('ErrorBoundary:', error, info); }
-  reset = () => this.setState({ error: null });
+  constructor(props) {
+    super(props);
+    this.state = {
+      error: null
+    };
+  }
+  static getDerivedStateFromError(error) {
+    return {
+      error
+    };
+  }
+  componentDidCatch(error, info) {
+    console.error('ErrorBoundary:', error, info);
+  }
+  reset = () => this.setState({
+    error: null
+  });
   render() {
     if (this.state.error) {
-      return (
-        <div style={{padding:'40px 20px',maxWidth:'600px',margin:'40px auto',fontFamily:'Inter,sans-serif'}}>
-          <div className="bcg-card" style={{padding:'24px'}}>
-            <h2 className="serif font-bold text-xl" style={{color:'var(--bad)',marginBottom:'12px'}}>
-              ⚠ 發生錯誤 / An error occurred
-            </h2>
-            <p className="text-sm" style={{marginBottom:'12px'}}>頁面渲染時遇到問題。你的作答紀錄仍儲存在本機，不會遺失。</p>
-            <p className="text-xs italic opacity-70" style={{marginBottom:'16px'}}>
-              The page hit an error. Your records are still saved locally.
-            </p>
-            <details style={{marginBottom:'16px',fontSize:'12px',background:'rgba(0,0,0,.04)',padding:'8px 12px',borderRadius:'6px'}}>
-              <summary style={{cursor:'pointer'}}>技術訊息 / Technical details</summary>
-              <pre style={{whiteSpace:'pre-wrap',marginTop:'8px',fontSize:'11px'}}>{String(this.state.error?.stack || this.state.error)}</pre>
-            </details>
-            <button className="bcg-btn" onClick={this.reset}>重試 / Try again</button>
-            <button className="bcg-btn-ghost" style={{marginLeft:'8px'}} onClick={() => location.reload()}>重新載入 / Reload</button>
-          </div>
-        </div>
-      );
+      return /*#__PURE__*/React.createElement("div", {
+        style: {
+          padding: '40px 20px',
+          maxWidth: '600px',
+          margin: '40px auto',
+          fontFamily: 'Inter,sans-serif'
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "bcg-card",
+        style: {
+          padding: '24px'
+        }
+      }, /*#__PURE__*/React.createElement("h2", {
+        className: "serif font-bold text-xl",
+        style: {
+          color: 'var(--bad)',
+          marginBottom: '12px'
+        }
+      }, "\u26A0 \u767C\u751F\u932F\u8AA4 / An error occurred"), /*#__PURE__*/React.createElement("p", {
+        className: "text-sm",
+        style: {
+          marginBottom: '12px'
+        }
+      }, "\u9801\u9762\u6E32\u67D3\u6642\u9047\u5230\u554F\u984C\u3002\u4F60\u7684\u4F5C\u7B54\u7D00\u9304\u4ECD\u5132\u5B58\u5728\u672C\u6A5F\uFF0C\u4E0D\u6703\u907A\u5931\u3002"), /*#__PURE__*/React.createElement("p", {
+        className: "text-xs italic opacity-70",
+        style: {
+          marginBottom: '16px'
+        }
+      }, "The page hit an error. Your records are still saved locally."), /*#__PURE__*/React.createElement("details", {
+        style: {
+          marginBottom: '16px',
+          fontSize: '12px',
+          background: 'rgba(0,0,0,.04)',
+          padding: '8px 12px',
+          borderRadius: '6px'
+        }
+      }, /*#__PURE__*/React.createElement("summary", {
+        style: {
+          cursor: 'pointer'
+        }
+      }, "\u6280\u8853\u8A0A\u606F / Technical details"), /*#__PURE__*/React.createElement("pre", {
+        style: {
+          whiteSpace: 'pre-wrap',
+          marginTop: '8px',
+          fontSize: '11px'
+        }
+      }, String(this.state.error?.stack || this.state.error))), /*#__PURE__*/React.createElement("button", {
+        className: "bcg-btn",
+        onClick: this.reset
+      }, "\u91CD\u8A66 / Try again"), /*#__PURE__*/React.createElement("button", {
+        className: "bcg-btn-ghost",
+        style: {
+          marginLeft: '8px'
+        },
+        onClick: () => location.reload()
+      }, "\u91CD\u65B0\u8F09\u5165 / Reload")));
     }
     return this.props.children;
   }
@@ -766,10 +958,12 @@ function App() {
   const [view, setView] = useState("home");
   const [activeTopic, setActiveTopic] = useState(null);
   const [quizSession, setQuizSession] = useState(null);
-
-  useEffect(() => { saveState(state); }, [state]);
-  useEffect(() => { document.documentElement.classList.toggle("dark", state.theme === "dark"); }, [state.theme]);
-
+  useEffect(() => {
+    saveState(state);
+  }, [state]);
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", state.theme === "dark");
+  }, [state.theme]);
   function startQuiz(topic) {
     setActiveTopic(topic);
     setQuizSession({
@@ -777,12 +971,14 @@ function App() {
       startTs: Date.now(),
       qStartTs: Date.now(),
       curIdx: 0,
-      answers: new Array(topic.questions.length).fill(null),
+      answers: new Array(topic.questions.length).fill(null)
     });
     setView("quiz");
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   }
-
   function recordAnswer(idx, chosen, timeSec) {
     const topic = activeTopic;
     const q = topic.questions[idx];
@@ -791,11 +987,21 @@ function App() {
     const key = `${topic.id}:${idx}`;
     setState(s => {
       const arr = s.attempts[key] ? [...s.attempts[key]] : [];
-      arr.push({ correct, timeSec, ts: Date.now(), chosen });
-      return { ...s, attempts: { ...s.attempts, [key]: arr } };
+      arr.push({
+        correct,
+        timeSec,
+        ts: Date.now(),
+        chosen
+      });
+      return {
+        ...s,
+        attempts: {
+          ...s.attempts,
+          [key]: arr
+        }
+      };
     });
   }
-
   function submitQuiz() {
     const topic = activeTopic;
     const answers = quizSession.answers;
@@ -810,171 +1016,301 @@ function App() {
       correctCount,
       total: topic.questions.length,
       totalTimeSec: totalTime,
-      answersSnap: answers,
+      answersSnap: answers
     };
-    setState(s => ({ ...s, sessions: [...s.sessions, summary] }));
-    setQuizSession({ ...quizSession, finished: true, summary });
+    setState(s => ({
+      ...s,
+      sessions: [...s.sessions, summary]
+    }));
+    setQuizSession({
+      ...quizSession,
+      finished: true,
+      summary
+    });
     setView("result");
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   }
-
-  function retryQuiz() { startQuiz(activeTopic); }
-
+  function retryQuiz() {
+    startQuiz(activeTopic);
+  }
   function nextTopic() {
     const idx = TOPICS.findIndex(t => t.id === activeTopic.id);
-    if (idx < TOPICS.length - 1) startQuiz(TOPICS[idx + 1]);
-    else { setView("dashboard"); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    if (idx < TOPICS.length - 1) startQuiz(TOPICS[idx + 1]);else {
+      setView("dashboard");
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
   }
-
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Header state={state} setState={setState} setView={setView} />
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 pb-12 pt-6 animate-fade-in" key={view}>
-        {view === "home" && <Home state={state} onStart={startQuiz} setView={setView} />}
-        {view === "profile" && <Profile state={state} setState={setState} setView={setView} />}
-        {view === "quiz" && quizSession && activeTopic && (
-          <Quiz topic={activeTopic} session={quizSession} setSession={setQuizSession}
-            recordAnswer={recordAnswer} submitQuiz={submitQuiz}
-            cancel={() => { setView("home"); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
-        )}
-        {view === "result" && quizSession?.finished && activeTopic && (
-          <Result topic={activeTopic} summary={quizSession.summary}
-            onRetry={retryQuiz} onNext={nextTopic}
-            onHome={() => { setView("home"); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-            onDashboard={() => { setView("dashboard"); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
-        )}
-        {view === "dashboard" && <Dashboard state={state} setState={setState} setView={setView} />}
-      </main>
-      <Footer />
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    className: "min-h-screen flex flex-col"
+  }, /*#__PURE__*/React.createElement(Header, {
+    state: state,
+    setState: setState,
+    setView: setView
+  }), /*#__PURE__*/React.createElement("main", {
+    className: "flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 pb-12 pt-6 animate-fade-in",
+    key: view
+  }, view === "home" && /*#__PURE__*/React.createElement(Home, {
+    state: state,
+    onStart: startQuiz,
+    setView: setView
+  }), view === "profile" && /*#__PURE__*/React.createElement(Profile, {
+    state: state,
+    setState: setState,
+    setView: setView
+  }), view === "quiz" && quizSession && activeTopic && /*#__PURE__*/React.createElement(Quiz, {
+    topic: activeTopic,
+    session: quizSession,
+    setSession: setQuizSession,
+    recordAnswer: recordAnswer,
+    submitQuiz: submitQuiz,
+    cancel: () => {
+      setView("home");
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  }), view === "result" && quizSession?.finished && activeTopic && /*#__PURE__*/React.createElement(Result, {
+    topic: activeTopic,
+    summary: quizSession.summary,
+    onRetry: retryQuiz,
+    onNext: nextTopic,
+    onHome: () => {
+      setView("home");
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    },
+    onDashboard: () => {
+      setView("dashboard");
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  }), view === "dashboard" && /*#__PURE__*/React.createElement(Dashboard, {
+    state: state,
+    setState: setState,
+    setView: setView
+  })), /*#__PURE__*/React.createElement(Footer, null));
 }
 
 // ============================================================
 // Header
 // ============================================================
-function Header({ state, setState, setView }) {
-  return (
-    <header className="sticky top-0 z-50 bg-[#004030] text-white border-b border-[#D8C3A5]/30">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setView("home"); window.scrollTo({top:0,behavior:'smooth'}); }}>
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-[#D8C3A5] text-[#004030] serif font-black text-xl">W</div>
-          <div>
-            <div className="brand-mark text-sm sm:text-base">AAI QUIZ</div>
-            <div className="text-[10.5px] text-[#D8C3A5]/80 hidden sm:block">Agentic AI × EMI/EML Self-Assessment · 40 Q</div>
-          </div>
-        </div>
-        <nav className="flex items-center gap-1">
-          <NavBtn onClick={() => { setView("home"); window.scrollTo({top:0,behavior:'smooth'}); }} icon={<Icon.Home />}>
-            <span className="hidden sm:inline">首頁</span>
-          </NavBtn>
-          <NavBtn onClick={() => { setView("dashboard"); window.scrollTo({top:0,behavior:'smooth'}); }} icon={<Icon.Dashboard />}>
-            <span className="hidden sm:inline">儀表板</span>
-          </NavBtn>
-          <NavBtn onClick={() => { setView("profile"); window.scrollTo({top:0,behavior:'smooth'}); }} icon={<Icon.User />}>
-            <span className="hidden sm:inline">個資</span>
-          </NavBtn>
-          <button
-            className="ml-2 p-2 hover:bg-white/10 rounded-lg transition-colors"
-            onClick={() => setState(s => ({ ...s, theme: s.theme === "dark" ? "light" : "dark" }))}
-            title={state.theme === "dark" ? "Switch to light" : "Switch to dark"}
-          >{state.theme === "dark" ? <Icon.Sun /> : <Icon.Moon />}</button>
-        </nav>
-      </div>
-    </header>
-  );
+function Header({
+  state,
+  setState,
+  setView
+}) {
+  return /*#__PURE__*/React.createElement("header", {
+    className: "sticky top-0 z-50 bg-[#004030] text-white border-b border-[#D8C3A5]/30"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3 cursor-pointer",
+    onClick: () => {
+      setView("home");
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "w-10 h-10 rounded-lg flex items-center justify-center bg-[#D8C3A5] text-[#004030] serif font-black text-xl"
+  }, "W"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "brand-mark text-sm sm:text-base"
+  }, "AAI QUIZ"), /*#__PURE__*/React.createElement("div", {
+    className: "text-[10.5px] text-[#D8C3A5]/80 hidden sm:block"
+  }, "Agentic AI \xD7 EMI/EML Self-Assessment \xB7 40 Q"))), /*#__PURE__*/React.createElement("nav", {
+    className: "flex items-center gap-1"
+  }, /*#__PURE__*/React.createElement(NavBtn, {
+    onClick: () => {
+      setView("home");
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    },
+    icon: /*#__PURE__*/React.createElement(Icon.Home, null)
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "hidden sm:inline"
+  }, "\u9996\u9801")), /*#__PURE__*/React.createElement(NavBtn, {
+    onClick: () => {
+      setView("dashboard");
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    },
+    icon: /*#__PURE__*/React.createElement(Icon.Dashboard, null)
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "hidden sm:inline"
+  }, "\u5100\u8868\u677F")), /*#__PURE__*/React.createElement(NavBtn, {
+    onClick: () => {
+      setView("profile");
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    },
+    icon: /*#__PURE__*/React.createElement(Icon.User, null)
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "hidden sm:inline"
+  }, "\u500B\u8CC7")), /*#__PURE__*/React.createElement("button", {
+    className: "ml-2 p-2 hover:bg-white/10 rounded-lg transition-colors",
+    onClick: () => setState(s => ({
+      ...s,
+      theme: s.theme === "dark" ? "light" : "dark"
+    })),
+    title: state.theme === "dark" ? "Switch to light" : "Switch to dark"
+  }, state.theme === "dark" ? /*#__PURE__*/React.createElement(Icon.Sun, null) : /*#__PURE__*/React.createElement(Icon.Moon, null)))));
 }
-function NavBtn({ children, icon, onClick }) {
-  return (
-    <button onClick={onClick} className="px-3 py-2 hover:bg-white/10 rounded-lg transition-colors flex items-center gap-1.5 text-sm">
-      {icon}{children}
-    </button>
-  );
+function NavBtn({
+  children,
+  icon,
+  onClick
+}) {
+  return /*#__PURE__*/React.createElement("button", {
+    onClick: onClick,
+    className: "px-3 py-2 hover:bg-white/10 rounded-lg transition-colors flex items-center gap-1.5 text-sm"
+  }, icon, children);
 }
 
 // ============================================================
 // Home
 // ============================================================
-function Home({ state, onStart, setView }) {
+function Home({
+  state,
+  onStart,
+  setView
+}) {
   const stats = useMemo(() => computeTopicStats(state, TOPICS), [state]);
-  return (
-    <div>
-      {/* Hero */}
-      <section className="mb-8">
-        <div className="badge badge-gold mb-3">2026 FCU iLINK AI FACULTY WORKSHOP</div>
-        <h1 className="h-display text-3xl sm:text-4xl mb-2 leading-tight">
-          Agentic AI × EMI/EML 知識自我檢測
-        </h1>
-        <div className="serif text-lg sm:text-xl italic opacity-70 mb-4" style={{color:'var(--mute)'}}>
-          Knowledge Self-Assessment · 8 Topics × 40 Questions
-        </div>
-        <Bi
-          zh="共 7 個主題、40 道題目。每完成一個主題即可送出，可重作或進入下一主題。所有作答歷程都會記錄在儀表板。"
-          en="7 topics · 40 questions. Submit per topic, retry or move on. All history is tracked in the Dashboard."
-          sizeZh="text-base" sizeEn="text-sm"
-        />
-      </section>
-
-      {/* Topic Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        {TOPICS.map((tp, i) => {
-          const s = stats[tp.id];
-          return (
-            <div key={tp.id} className="topic-tile" onClick={() => onStart(tp)}>
-              <div className="flex items-start justify-between mb-3">
-                <div className="badge badge-green">TOPIC {String(i + 1).padStart(2, '0')}</div>
-                <div className="text-xs opacity-60">{tp.questions.length} Q</div>
-              </div>
-              <div className="serif font-bold text-lg leading-snug mb-1">{tp.titleZh}</div>
-              <div className="serif italic text-sm opacity-70 mb-3">{tp.titleEn}</div>
-              <Bi zh={tp.descZh} en={tp.descEn} sizeZh="text-xs" sizeEn="text-xs" className="mb-4 opacity-80" />
-              <div className="flex items-center justify-between text-[11px] mb-2" style={{color:'var(--mute)'}}>
-                <span>已作答 / Attempted: <span className="font-semibold" style={{color:'var(--ink)'}}>{s.attempted}/{tp.questions.length}</span></span>
-                <span>正確率 / Acc: <span className="font-semibold" style={{color:'var(--ink)'}}>{s.attempted > 0 ? Math.round(s.lastAccuracy * 100) : "—"}%</span></span>
-              </div>
-              <div className="progress-bar mb-3"><div className="progress-fill" style={{ width: `${s.attempted / tp.questions.length * 100}%` }}></div></div>
-              <div className="flex justify-end">
-                <span className="text-sm font-medium" style={{color:'var(--bcg-green)'}}>
-                  {s.attempted > 0 ? '重新測驗 / Retake' : '開始作答 / Start'} →
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Overview */}
-      <div className="bcg-card-cream p-5">
-        <div className="serif font-bold text-lg mb-3" style={{color:'var(--bcg-green)'}}>
-          總覽 · Overview
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Stat num={TOTAL_Q} labelZh="總題數" labelEn="Total Questions" />
-          <Stat num={TOPICS.length} labelZh="主題數" labelEn="Topics" />
-          <Stat num={state.sessions.length} labelZh="測驗次數" labelEn="Sessions" />
-          <Stat num={Object.keys(state.attempts).length} labelZh="已作答題目" labelEn="Distinct Qs" />
-        </div>
-      </div>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("section", {
+    className: "mb-8"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "badge badge-gold mb-3"
+  }, "2026 FCU iLINK AI FACULTY WORKSHOP"), /*#__PURE__*/React.createElement("h1", {
+    className: "h-display text-3xl sm:text-4xl mb-2 leading-tight"
+  }, "Agentic AI \xD7 EMI/EML \u77E5\u8B58\u81EA\u6211\u6AA2\u6E2C"), /*#__PURE__*/React.createElement("div", {
+    className: "serif text-lg sm:text-xl italic opacity-70 mb-4",
+    style: {
+      color: 'var(--mute)'
+    }
+  }, "Knowledge Self-Assessment \xB7 8 Topics \xD7 40 Questions"), /*#__PURE__*/React.createElement(Bi, {
+    zh: "\u5171 7 \u500B\u4E3B\u984C\u300140 \u9053\u984C\u76EE\u3002\u6BCF\u5B8C\u6210\u4E00\u500B\u4E3B\u984C\u5373\u53EF\u9001\u51FA\uFF0C\u53EF\u91CD\u4F5C\u6216\u9032\u5165\u4E0B\u4E00\u4E3B\u984C\u3002\u6240\u6709\u4F5C\u7B54\u6B77\u7A0B\u90FD\u6703\u8A18\u9304\u5728\u5100\u8868\u677F\u3002",
+    en: "7 topics \xB7 40 questions. Submit per topic, retry or move on. All history is tracked in the Dashboard.",
+    sizeZh: "text-base",
+    sizeEn: "text-sm"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"
+  }, TOPICS.map((tp, i) => {
+    const s = stats[tp.id];
+    return /*#__PURE__*/React.createElement("div", {
+      key: tp.id,
+      className: "topic-tile",
+      onClick: () => onStart(tp)
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex items-start justify-between mb-3"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "badge badge-green"
+    }, "TOPIC ", String(i + 1).padStart(2, '0')), /*#__PURE__*/React.createElement("div", {
+      className: "text-xs opacity-60"
+    }, tp.questions.length, " Q")), /*#__PURE__*/React.createElement("div", {
+      className: "serif font-bold text-lg leading-snug mb-1"
+    }, tp.titleZh), /*#__PURE__*/React.createElement("div", {
+      className: "serif italic text-sm opacity-70 mb-3"
+    }, tp.titleEn), /*#__PURE__*/React.createElement(Bi, {
+      zh: tp.descZh,
+      en: tp.descEn,
+      sizeZh: "text-xs",
+      sizeEn: "text-xs",
+      className: "mb-4 opacity-80"
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "flex items-center justify-between text-[11px] mb-2",
+      style: {
+        color: 'var(--mute)'
+      }
+    }, /*#__PURE__*/React.createElement("span", null, "\u5DF2\u4F5C\u7B54 / Attempted: ", /*#__PURE__*/React.createElement("span", {
+      className: "font-semibold",
+      style: {
+        color: 'var(--ink)'
+      }
+    }, s.attempted, "/", tp.questions.length)), /*#__PURE__*/React.createElement("span", null, "\u6B63\u78BA\u7387 / Acc: ", /*#__PURE__*/React.createElement("span", {
+      className: "font-semibold",
+      style: {
+        color: 'var(--ink)'
+      }
+    }, s.attempted > 0 ? Math.round(s.lastAccuracy * 100) : "—", "%"))), /*#__PURE__*/React.createElement("div", {
+      className: "progress-bar mb-3"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "progress-fill",
+      style: {
+        width: `${s.attempted / tp.questions.length * 100}%`
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "flex justify-end"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "text-sm font-medium",
+      style: {
+        color: 'var(--bcg-green)'
+      }
+    }, s.attempted > 0 ? '重新測驗 / Retake' : '開始作答 / Start', " \u2192")));
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "bcg-card-cream p-5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "serif font-bold text-lg mb-3",
+    style: {
+      color: 'var(--bcg-green)'
+    }
+  }, "\u7E3D\u89BD \xB7 Overview"), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 sm:grid-cols-4 gap-4"
+  }, /*#__PURE__*/React.createElement(Stat, {
+    num: TOTAL_Q,
+    labelZh: "\u7E3D\u984C\u6578",
+    labelEn: "Total Questions"
+  }), /*#__PURE__*/React.createElement(Stat, {
+    num: TOPICS.length,
+    labelZh: "\u4E3B\u984C\u6578",
+    labelEn: "Topics"
+  }), /*#__PURE__*/React.createElement(Stat, {
+    num: state.sessions.length,
+    labelZh: "\u6E2C\u9A57\u6B21\u6578",
+    labelEn: "Sessions"
+  }), /*#__PURE__*/React.createElement(Stat, {
+    num: Object.keys(state.attempts).length,
+    labelZh: "\u5DF2\u4F5C\u7B54\u984C\u76EE",
+    labelEn: "Distinct Qs"
+  }))));
 }
-
-function Stat({ num, labelZh, labelEn }) {
-  return (
-    <div>
-      <div className="stat-num">{num}</div>
-      <div className="text-[11px] mt-1 leading-tight" style={{color:'var(--mute)'}}>
-        <div>{labelZh}</div>
-        <div className="italic opacity-80">{labelEn}</div>
-      </div>
-    </div>
-  );
+function Stat({
+  num,
+  labelZh,
+  labelEn
+}) {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "stat-num"
+  }, num), /*#__PURE__*/React.createElement("div", {
+    className: "text-[11px] mt-1 leading-tight",
+    style: {
+      color: 'var(--mute)'
+    }
+  }, /*#__PURE__*/React.createElement("div", null, labelZh), /*#__PURE__*/React.createElement("div", {
+    className: "italic opacity-80"
+  }, labelEn)));
 }
-
 function computeTopicStats(state, topics) {
   const r = {};
   topics.forEach(tp => {
-    let attempted = 0, lastCorrect = 0;
+    let attempted = 0,
+      lastCorrect = 0;
     tp.questions.forEach((_, qi) => {
       const arr = state.attempts[`${tp.id}:${qi}`];
       if (arr && arr.length > 0) {
@@ -982,7 +1318,10 @@ function computeTopicStats(state, topics) {
         if (arr[arr.length - 1].correct) lastCorrect++;
       }
     });
-    r[tp.id] = { attempted, lastAccuracy: attempted > 0 ? lastCorrect / attempted : 0 };
+    r[tp.id] = {
+      attempted,
+      lastAccuracy: attempted > 0 ? lastCorrect / attempted : 0
+    };
   });
   return r;
 }
@@ -990,254 +1329,411 @@ function computeTopicStats(state, topics) {
 // ============================================================
 // Profile
 // ============================================================
-function Profile({ state, setState, setView }) {
+function Profile({
+  state,
+  setState,
+  setView
+}) {
   const [p, setP] = useState(state.profile);
   const [warn, setWarn] = useState(false);
   const missing = profileMissing(p);
-  return (
-    <div className="max-w-xl">
-      <h2 className="h-display text-2xl mb-1">個人資料</h2>
-      <div className="serif italic opacity-70 mb-1" style={{color:'var(--mute)'}}>Profile</div>
-      <Bi
-        zh="四個欄位皆為必填；填妥後才能在儀表板匯出 CSV。資料只儲存在本機瀏覽器，不會上傳。"
-        en="All four fields are required; CSV export unlocks once complete. Data stays in your browser only."
-        sizeZh="text-sm" sizeEn="text-xs"
-        className="mb-5"
-      />
-      <div className="bcg-card p-6 space-y-4">
-        <Field labelZh="姓名" labelEn="Name (English / 中文)" required
-          value={p.name} onChange={v => setP({ ...p, name: sanitizeName(v) })} />
-        <Field labelZh="學號" labelEn="Student ID" required
-          value={p.studentId} onChange={v => setP({ ...p, studentId: sanitizeStudentId(v) })} />
-        <Field labelZh="Email" labelEn="Email" type="email" required
-          value={p.email} onChange={v => setP({ ...p, email: sanitizeName(v) })} />
-        <div>
-          <label className="text-xs mb-1.5 block" style={{color:'var(--mute)'}}>
-            <span>組別</span>
-            <span className="italic ml-1 opacity-80">· Group</span>
-            <span className="ml-1" style={{color:'var(--bad)'}}>＊必填 / required</span>
-          </label>
-          <select value={p.group} onChange={e => setP({ ...p, group: e.target.value })}>
-            <option value="">— Select —</option>
-            {['G1','G2','G3','G4','G5','G6','G7','G8','G9','G10','G11','G12','Others'].map(g=> <option key={g} value={g}>{g}</option>)}
-          </select>
-        </div>
-        {warn && missing.length > 0 && (
-          <div className="text-sm rounded-lg p-3" style={{color:'var(--bad)', background:'rgba(179,38,30,.08)', border:'1px solid rgba(179,38,30,.3)'}}>
-            ⚠ 尚未填寫：{missing.join('、')}。四欄皆為必填。
-            <span className="block italic opacity-80 text-xs mt-1">Still missing: {missing.join(', ')}. All four fields are required.</span>
-          </div>
-        )}
-        <div className="flex gap-3 pt-2">
-          <button className="bcg-btn" onClick={() => {
-            if (missing.length > 0) { setWarn(true); return; }
-            setState(s => ({ ...s, profile: p })); setView("home"); window.scrollTo({top:0,behavior:'smooth'});
-          }}>
-            儲存 / Save
-          </button>
-          <button className="bcg-btn-ghost" onClick={() => { setView("home"); window.scrollTo({top:0,behavior:'smooth'}); }}>取消 / Cancel</button>
-        </div>
-      </div>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    className: "max-w-xl"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "h-display text-2xl mb-1"
+  }, "\u500B\u4EBA\u8CC7\u6599"), /*#__PURE__*/React.createElement("div", {
+    className: "serif italic opacity-70 mb-1",
+    style: {
+      color: 'var(--mute)'
+    }
+  }, "Profile"), /*#__PURE__*/React.createElement(Bi, {
+    zh: "\u56DB\u500B\u6B04\u4F4D\u7686\u70BA\u5FC5\u586B\uFF1B\u586B\u59A5\u5F8C\u624D\u80FD\u5728\u5100\u8868\u677F\u532F\u51FA CSV\u3002\u8CC7\u6599\u53EA\u5132\u5B58\u5728\u672C\u6A5F\u700F\u89BD\u5668\uFF0C\u4E0D\u6703\u4E0A\u50B3\u3002",
+    en: "All four fields are required; CSV export unlocks once complete. Data stays in your browser only.",
+    sizeZh: "text-sm",
+    sizeEn: "text-xs",
+    className: "mb-5"
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "bcg-card p-6 space-y-4"
+  }, /*#__PURE__*/React.createElement(Field, {
+    labelZh: "\u59D3\u540D",
+    labelEn: "Name (English / \u4E2D\u6587)",
+    required: true,
+    value: p.name,
+    onChange: v => setP({
+      ...p,
+      name: sanitizeName(v)
+    })
+  }), /*#__PURE__*/React.createElement(Field, {
+    labelZh: "\u5B78\u865F",
+    labelEn: "Student ID",
+    required: true,
+    value: p.studentId,
+    onChange: v => setP({
+      ...p,
+      studentId: sanitizeStudentId(v)
+    })
+  }), /*#__PURE__*/React.createElement(Field, {
+    labelZh: "Email",
+    labelEn: "Email",
+    type: "email",
+    required: true,
+    value: p.email,
+    onChange: v => setP({
+      ...p,
+      email: sanitizeName(v)
+    })
+  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs mb-1.5 block",
+    style: {
+      color: 'var(--mute)'
+    }
+  }, /*#__PURE__*/React.createElement("span", null, "\u7D44\u5225"), /*#__PURE__*/React.createElement("span", {
+    className: "italic ml-1 opacity-80"
+  }, "\xB7 Group"), /*#__PURE__*/React.createElement("span", {
+    className: "ml-1",
+    style: {
+      color: 'var(--bad)'
+    }
+  }, "\uFF0A\u5FC5\u586B / required")), /*#__PURE__*/React.createElement("select", {
+    value: p.group,
+    onChange: e => setP({
+      ...p,
+      group: e.target.value
+    })
+  }, /*#__PURE__*/React.createElement("option", {
+    value: ""
+  }, "\u2014 Select \u2014"), ['G1', 'G2', 'G3', 'G4', 'G5', 'G6', 'G7', 'G8', 'G9', 'G10', 'G11', 'G12', 'Others'].map(g => /*#__PURE__*/React.createElement("option", {
+    key: g,
+    value: g
+  }, g)))), warn && missing.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "text-sm rounded-lg p-3",
+    style: {
+      color: 'var(--bad)',
+      background: 'rgba(179,38,30,.08)',
+      border: '1px solid rgba(179,38,30,.3)'
+    }
+  }, "\u26A0 \u5C1A\u672A\u586B\u5BEB\uFF1A", missing.join('、'), "\u3002\u56DB\u6B04\u7686\u70BA\u5FC5\u586B\u3002", /*#__PURE__*/React.createElement("span", {
+    className: "block italic opacity-80 text-xs mt-1"
+  }, "Still missing: ", missing.join(', '), ". All four fields are required.")), /*#__PURE__*/React.createElement("div", {
+    className: "flex gap-3 pt-2"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "bcg-btn",
+    onClick: () => {
+      if (missing.length > 0) {
+        setWarn(true);
+        return;
+      }
+      setState(s => ({
+        ...s,
+        profile: p
+      }));
+      setView("home");
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  }, "\u5132\u5B58 / Save"), /*#__PURE__*/React.createElement("button", {
+    className: "bcg-btn-ghost",
+    onClick: () => {
+      setView("home");
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  }, "\u53D6\u6D88 / Cancel"))));
 }
-function Field({ labelZh, labelEn, value, onChange, type='text', required=false }) {
-  return (
-    <div>
-      <label className="text-xs mb-1.5 block" style={{color:'var(--mute)'}}>
-        <span>{labelZh}</span>
-        <span className="italic ml-1 opacity-80">· {labelEn}</span>
-        {required && <span className="ml-1" style={{color:'var(--bad)'}}>＊必填 / required</span>}
-      </label>
-      <input type={type} value={value} onChange={e => onChange(e.target.value)} />
-    </div>
-  );
+function Field({
+  labelZh,
+  labelEn,
+  value,
+  onChange,
+  type = 'text',
+  required = false
+}) {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    className: "text-xs mb-1.5 block",
+    style: {
+      color: 'var(--mute)'
+    }
+  }, /*#__PURE__*/React.createElement("span", null, labelZh), /*#__PURE__*/React.createElement("span", {
+    className: "italic ml-1 opacity-80"
+  }, "\xB7 ", labelEn), required && /*#__PURE__*/React.createElement("span", {
+    className: "ml-1",
+    style: {
+      color: 'var(--bad)'
+    }
+  }, "\uFF0A\u5FC5\u586B / required")), /*#__PURE__*/React.createElement("input", {
+    type: type,
+    value: value,
+    onChange: e => onChange(e.target.value)
+  }));
 }
 
 // ============================================================
 // Quiz
 // ============================================================
-function Quiz({ topic, session, setSession, recordAnswer, submitQuiz, cancel }) {
+function Quiz({
+  topic,
+  session,
+  setSession,
+  recordAnswer,
+  submitQuiz,
+  cancel
+}) {
   const q = topic.questions[session.curIdx];
   const cur = session.answers[session.curIdx];
   const correctIdx = _d(q.ans);
   // reveal 由「該題是否已作答」直接推導，不用 useState（避免 race condition）
   const reveal = cur != null;
-
   useEffect(() => {
     // 切換題目時，若該題尚未作答才重設計時起點
     if (session.answers[session.curIdx] == null) {
-      setSession(s => ({ ...s, qStartTs: Date.now() }));
+      setSession(s => ({
+        ...s,
+        qStartTs: Date.now()
+      }));
     }
   }, [session.curIdx]);
-
   function choose(i) {
     if (reveal) return;
     const timeSec = Math.round((Date.now() - session.qStartTs) / 1000);
     const newAnswers = [...session.answers];
-    newAnswers[session.curIdx] = { chosen: i, timeSec };
-    setSession(s => ({ ...s, answers: newAnswers }));
+    newAnswers[session.curIdx] = {
+      chosen: i,
+      timeSec
+    };
+    setSession(s => ({
+      ...s,
+      answers: newAnswers
+    }));
     recordAnswer(session.curIdx, i, timeSec);
   }
-
   function go(delta) {
     const newIdx = session.curIdx + delta;
     if (newIdx < 0 || newIdx >= topic.questions.length) return;
-    setSession(s => ({ ...s, curIdx: newIdx }));
+    setSession(s => ({
+      ...s,
+      curIdx: newIdx
+    }));
   }
-
   const allAnswered = session.answers.every(a => a !== null);
   const progress = (session.curIdx + 1) / topic.questions.length;
   const isCorrect = cur && cur.chosen === correctIdx;
-
-  return (
-    <div>
-      {/* Topic header */}
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <div className="badge badge-gold mb-1">TOPIC · {topic.titleEn}</div>
-          <h2 className="serif font-bold text-xl">
-            <span>{topic.titleZh}</span>
-            <span className="italic font-normal text-sm opacity-70 ml-2">· {topic.titleEn}</span>
-          </h2>
-        </div>
-        <button className="text-xs underline opacity-70 hover:opacity-100" onClick={cancel}>
-          退出 / Exit
-        </button>
-      </div>
-      <div className="text-xs mb-2 opacity-70">
-        第 {session.curIdx + 1} 題 / Question {session.curIdx + 1} of {topic.questions.length}
-      </div>
-      <div className="progress-bar mb-6"><div className="progress-fill" style={{ width: `${progress * 100}%` }}></div></div>
-
-      {/* Question card */}
-      <div className="bcg-card p-6 mb-4">
-        <div className="serif font-bold text-base sm:text-lg leading-relaxed">{q.qZh}</div>
-        <div className="serif italic text-sm mt-1.5 opacity-75">{q.qEn}</div>
-
-        <div className="space-y-2.5 mt-6">
-          {q.optsZh.map((optZh, i) => {
-            const optEn = q.optsEn[i];
-            const isChosen = cur && cur.chosen === i;
-            let cls = "opt";
-            if (reveal) {
-              if (i === correctIdx) cls += " correct";
-              else if (isChosen) cls += " wrong";
-            } else if (isChosen) cls += " selected";
-            return (
-              <div key={i} className={cls} onClick={() => choose(i)}>
-                <div className="flex items-start gap-3">
-                  <div className="serif font-bold text-base shrink-0" style={{minWidth:'22px',color:'var(--bcg-green)'}}>{String.fromCharCode(65 + i)}</div>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">{optZh}</div>
-                    <div className="text-xs italic opacity-70 mt-0.5">{optEn}</div>
-                  </div>
-                  {reveal && i === correctIdx && <span className="serif font-bold" style={{color:'var(--ok)'}}>✓</span>}
-                  {reveal && isChosen && i !== correctIdx && <span className="serif font-bold" style={{color:'var(--bad)'}}>✗</span>}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {reveal && (
-          <div className="mt-6 p-4 rounded-lg animate-fade-in" style={{
-            background: isCorrect ? 'rgba(47,125,79,.08)' : 'rgba(179,38,30,.06)',
-            border: `1px solid ${isCorrect ? 'var(--ok)' : 'var(--bad)'}`,
-          }}>
-            <div className="serif font-bold text-sm mb-2" style={{color: isCorrect ? 'var(--ok)' : 'var(--bad)'}}>
-              {isCorrect ? '✓ 答對了！ Correct!' : '✗ 答錯了 Incorrect'}
-            </div>
-            <div className="text-sm leading-relaxed">{q.expZh}</div>
-            <div className="text-xs italic opacity-75 mt-1">{q.expEn}</div>
-            <div className="text-[11px] mt-3 opacity-60">⏱ {cur.timeSec}s</div>
-          </div>
-        )}
-      </div>
-
-      {/* Nav buttons */}
-      <div className="flex justify-between items-center">
-        <button className="bcg-btn-ghost" onClick={() => go(-1)} disabled={session.curIdx === 0}>← 上一題 / Prev</button>
-        <div className="text-xs opacity-70">
-          已作答 / Answered: <span className="font-semibold">{session.answers.filter(a => a !== null).length}</span> / {topic.questions.length}
-        </div>
-        {session.curIdx < topic.questions.length - 1 ? (
-          <button className="bcg-btn" onClick={() => go(1)}>下一題 / Next →</button>
-        ) : (
-          <button className="bcg-btn" onClick={submitQuiz} disabled={!allAnswered}>送出 / Submit ✓</button>
-        )}
-      </div>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center justify-between mb-2"
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "badge badge-gold mb-1"
+  }, "TOPIC \xB7 ", topic.titleEn), /*#__PURE__*/React.createElement("h2", {
+    className: "serif font-bold text-xl"
+  }, /*#__PURE__*/React.createElement("span", null, topic.titleZh), /*#__PURE__*/React.createElement("span", {
+    className: "italic font-normal text-sm opacity-70 ml-2"
+  }, "\xB7 ", topic.titleEn))), /*#__PURE__*/React.createElement("button", {
+    className: "text-xs underline opacity-70 hover:opacity-100",
+    onClick: cancel
+  }, "\u9000\u51FA / Exit")), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs mb-2 opacity-70"
+  }, "\u7B2C ", session.curIdx + 1, " \u984C / Question ", session.curIdx + 1, " of ", topic.questions.length), /*#__PURE__*/React.createElement("div", {
+    className: "progress-bar mb-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "progress-fill",
+    style: {
+      width: `${progress * 100}%`
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "bcg-card p-6 mb-4"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "serif font-bold text-base sm:text-lg leading-relaxed"
+  }, q.qZh), /*#__PURE__*/React.createElement("div", {
+    className: "serif italic text-sm mt-1.5 opacity-75"
+  }, q.qEn), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2.5 mt-6"
+  }, q.optsZh.map((optZh, i) => {
+    const optEn = q.optsEn[i];
+    const isChosen = cur && cur.chosen === i;
+    let cls = "opt";
+    if (reveal) {
+      if (i === correctIdx) cls += " correct";else if (isChosen) cls += " wrong";
+    } else if (isChosen) cls += " selected";
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      className: cls,
+      onClick: () => choose(i)
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex items-start gap-3"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "serif font-bold text-base shrink-0",
+      style: {
+        minWidth: '22px',
+        color: 'var(--bcg-green)'
+      }
+    }, String.fromCharCode(65 + i)), /*#__PURE__*/React.createElement("div", {
+      className: "flex-1"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "text-sm font-medium"
+    }, optZh), /*#__PURE__*/React.createElement("div", {
+      className: "text-xs italic opacity-70 mt-0.5"
+    }, optEn)), reveal && i === correctIdx && /*#__PURE__*/React.createElement("span", {
+      className: "serif font-bold",
+      style: {
+        color: 'var(--ok)'
+      }
+    }, "\u2713"), reveal && isChosen && i !== correctIdx && /*#__PURE__*/React.createElement("span", {
+      className: "serif font-bold",
+      style: {
+        color: 'var(--bad)'
+      }
+    }, "\u2717")));
+  })), reveal && /*#__PURE__*/React.createElement("div", {
+    className: "mt-6 p-4 rounded-lg animate-fade-in",
+    style: {
+      background: isCorrect ? 'rgba(47,125,79,.08)' : 'rgba(179,38,30,.06)',
+      border: `1px solid ${isCorrect ? 'var(--ok)' : 'var(--bad)'}`
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "serif font-bold text-sm mb-2",
+    style: {
+      color: isCorrect ? 'var(--ok)' : 'var(--bad)'
+    }
+  }, isCorrect ? '✓ 答對了！ Correct!' : '✗ 答錯了 Incorrect'), /*#__PURE__*/React.createElement("div", {
+    className: "text-sm leading-relaxed"
+  }, q.expZh), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs italic opacity-75 mt-1"
+  }, q.expEn), /*#__PURE__*/React.createElement("div", {
+    className: "text-[11px] mt-3 opacity-60"
+  }, "\u23F1 ", cur.timeSec, "s"))), /*#__PURE__*/React.createElement("div", {
+    className: "flex justify-between items-center"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "bcg-btn-ghost",
+    onClick: () => go(-1),
+    disabled: session.curIdx === 0
+  }, "\u2190 \u4E0A\u4E00\u984C / Prev"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs opacity-70"
+  }, "\u5DF2\u4F5C\u7B54 / Answered: ", /*#__PURE__*/React.createElement("span", {
+    className: "font-semibold"
+  }, session.answers.filter(a => a !== null).length), " / ", topic.questions.length), session.curIdx < topic.questions.length - 1 ? /*#__PURE__*/React.createElement("button", {
+    className: "bcg-btn",
+    onClick: () => go(1)
+  }, "\u4E0B\u4E00\u984C / Next \u2192") : /*#__PURE__*/React.createElement("button", {
+    className: "bcg-btn",
+    onClick: submitQuiz,
+    disabled: !allAnswered
+  }, "\u9001\u51FA / Submit \u2713")));
 }
 
 // ============================================================
 // Result
 // ============================================================
-function Result({ topic, summary, onRetry, onNext, onHome, onDashboard }) {
+function Result({
+  topic,
+  summary,
+  onRetry,
+  onNext,
+  onHome,
+  onDashboard
+}) {
   const pct = Math.round(summary.correctCount / summary.total * 100);
   const grade = pct >= 90 ? "Excellent / 優異" : pct >= 75 ? "Good / 良好" : pct >= 60 ? "Pass / 及格" : "Keep practicing / 再加油";
-  return (
-    <div>
-      <div className="bcg-card p-8 mb-5 text-center">
-        <div className="badge badge-gold mb-3">{topic.titleEn.toUpperCase()}</div>
-        <div className="serif font-bold text-lg mb-1">{topic.titleZh}</div>
-        <div className="serif italic text-sm opacity-70 mb-6">Your Score · 本次成績</div>
-        <div className="serif font-black" style={{fontSize:'56px',color:'var(--bcg-green)',lineHeight:1}}>
-          {summary.correctCount}<span className="opacity-50" style={{fontSize:'28px'}}>/{summary.total}</span>
-        </div>
-        <div className="serif text-2xl mt-2" style={{color:'var(--bcg-green)'}}>{pct}%</div>
-        <div className="text-xs mt-2 opacity-70">{grade}</div>
-        <div className="text-xs mt-4 opacity-60">
-          ⏱ {summary.totalTimeSec}s · 平均每題 / Avg per Q: {Math.round(summary.totalTimeSec / summary.total)}s
-        </div>
-      </div>
-
-      <div className="bcg-card p-5 mb-5">
-        <div className="serif font-bold text-lg mb-3" style={{color:'var(--bcg-green)'}}>逐題回顧 · Per-Question Review</div>
-        <div className="space-y-2">
-          {topic.questions.map((q, i) => {
-            const a = summary.answersSnap[i];
-            const correctIdx = _d(q.ans);
-            const isCorrect = a && a.chosen === correctIdx;
-            return (
-              <div key={i} className="flex items-start gap-3 py-2 border-b last:border-b-0" style={{borderColor:'var(--line)'}}>
-                <div className="serif font-bold shrink-0" style={{color: isCorrect ? 'var(--ok)' : 'var(--bad)', minWidth:'28px'}}>
-                  {isCorrect ? '✓' : '✗'} {i + 1}
-                </div>
-                <div className="flex-1 text-sm">
-                  <div>{q.qZh}</div>
-                  <div className="italic text-xs opacity-70 mt-0.5">{q.qEn}</div>
-                  {!isCorrect && (
-                    <div className="text-xs mt-1.5 p-2 rounded" style={{background:'rgba(216,195,165,.12)'}}>
-                      <span className="font-semibold">正解 / Answer:</span> {String.fromCharCode(65 + correctIdx)}. {q.optsZh[correctIdx]}
-                      <div className="italic opacity-70">{q.optsEn[correctIdx]}</div>
-                    </div>
-                  )}
-                </div>
-                <div className="text-[11px] opacity-60 shrink-0">⏱ {a?.timeSec ?? 0}s</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-2 justify-center">
-        <button className="bcg-btn-ghost" onClick={onRetry}>↻ 重作 / Retry</button>
-        <button className="bcg-btn" onClick={onNext}>下一主題 / Next Topic →</button>
-        <button className="bcg-btn-ghost" onClick={onDashboard}>📊 儀表板 / Dashboard</button>
-        <button className="bcg-btn-ghost" onClick={onHome}>⌂ 首頁 / Home</button>
-      </div>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "bcg-card p-8 mb-5 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "badge badge-gold mb-3"
+  }, topic.titleEn.toUpperCase()), /*#__PURE__*/React.createElement("div", {
+    className: "serif font-bold text-lg mb-1"
+  }, topic.titleZh), /*#__PURE__*/React.createElement("div", {
+    className: "serif italic text-sm opacity-70 mb-6"
+  }, "Your Score \xB7 \u672C\u6B21\u6210\u7E3E"), /*#__PURE__*/React.createElement("div", {
+    className: "serif font-black",
+    style: {
+      fontSize: '56px',
+      color: 'var(--bcg-green)',
+      lineHeight: 1
+    }
+  }, summary.correctCount, /*#__PURE__*/React.createElement("span", {
+    className: "opacity-50",
+    style: {
+      fontSize: '28px'
+    }
+  }, "/", summary.total)), /*#__PURE__*/React.createElement("div", {
+    className: "serif text-2xl mt-2",
+    style: {
+      color: 'var(--bcg-green)'
+    }
+  }, pct, "%"), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs mt-2 opacity-70"
+  }, grade), /*#__PURE__*/React.createElement("div", {
+    className: "text-xs mt-4 opacity-60"
+  }, "\u23F1 ", summary.totalTimeSec, "s \xB7 \u5E73\u5747\u6BCF\u984C / Avg per Q: ", Math.round(summary.totalTimeSec / summary.total), "s")), /*#__PURE__*/React.createElement("div", {
+    className: "bcg-card p-5 mb-5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "serif font-bold text-lg mb-3",
+    style: {
+      color: 'var(--bcg-green)'
+    }
+  }, "\u9010\u984C\u56DE\u9867 \xB7 Per-Question Review"), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-2"
+  }, topic.questions.map((q, i) => {
+    const a = summary.answersSnap[i];
+    const correctIdx = _d(q.ans);
+    const isCorrect = a && a.chosen === correctIdx;
+    return /*#__PURE__*/React.createElement("div", {
+      key: i,
+      className: "flex items-start gap-3 py-2 border-b last:border-b-0",
+      style: {
+        borderColor: 'var(--line)'
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "serif font-bold shrink-0",
+      style: {
+        color: isCorrect ? 'var(--ok)' : 'var(--bad)',
+        minWidth: '28px'
+      }
+    }, isCorrect ? '✓' : '✗', " ", i + 1), /*#__PURE__*/React.createElement("div", {
+      className: "flex-1 text-sm"
+    }, /*#__PURE__*/React.createElement("div", null, q.qZh), /*#__PURE__*/React.createElement("div", {
+      className: "italic text-xs opacity-70 mt-0.5"
+    }, q.qEn), !isCorrect && /*#__PURE__*/React.createElement("div", {
+      className: "text-xs mt-1.5 p-2 rounded",
+      style: {
+        background: 'rgba(216,195,165,.12)'
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "font-semibold"
+    }, "\u6B63\u89E3 / Answer:"), " ", String.fromCharCode(65 + correctIdx), ". ", q.optsZh[correctIdx], /*#__PURE__*/React.createElement("div", {
+      className: "italic opacity-70"
+    }, q.optsEn[correctIdx]))), /*#__PURE__*/React.createElement("div", {
+      className: "text-[11px] opacity-60 shrink-0"
+    }, "\u23F1 ", a?.timeSec ?? 0, "s"));
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-2 justify-center"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "bcg-btn-ghost",
+    onClick: onRetry
+  }, "\u21BB \u91CD\u4F5C / Retry"), /*#__PURE__*/React.createElement("button", {
+    className: "bcg-btn",
+    onClick: onNext
+  }, "\u4E0B\u4E00\u4E3B\u984C / Next Topic \u2192"), /*#__PURE__*/React.createElement("button", {
+    className: "bcg-btn-ghost",
+    onClick: onDashboard
+  }, "\uD83D\uDCCA \u5100\u8868\u677F / Dashboard"), /*#__PURE__*/React.createElement("button", {
+    className: "bcg-btn-ghost",
+    onClick: onHome
+  }, "\u2302 \u9996\u9801 / Home")));
 }
 
 // ============================================================
 // Dashboard
 // ============================================================
-function Dashboard({ state, setState, setView }) {
+function Dashboard({
+  state,
+  setState,
+  setView
+}) {
   const overall = useMemo(() => {
-    let totalAttempts = 0, totalCorrect = 0, totalTime = 0;
+    let totalAttempts = 0,
+      totalCorrect = 0,
+      totalTime = 0;
     Object.values(state.attempts).forEach(arr => {
       arr.forEach(a => {
         totalAttempts++;
@@ -1246,12 +1742,13 @@ function Dashboard({ state, setState, setView }) {
       });
     });
     return {
-      totalAttempts, totalCorrect, totalTime,
+      totalAttempts,
+      totalCorrect,
+      totalTime,
       accuracy: totalAttempts ? totalCorrect / totalAttempts : 0,
-      avgTime: totalAttempts ? totalTime / totalAttempts : 0,
+      avgTime: totalAttempts ? totalTime / totalAttempts : 0
     };
   }, [state.attempts]);
-
   const perQuestion = useMemo(() => {
     const rows = [];
     TOPICS.forEach(topic => {
@@ -1268,26 +1765,33 @@ function Dashboard({ state, setState, setView }) {
           attempts: arr.length,
           accuracy: arr.length ? correct / arr.length : 0,
           avgTime: avgT,
-          lastCorrect: arr.length ? arr[arr.length - 1].correct : null,
+          lastCorrect: arr.length ? arr[arr.length - 1].correct : null
         });
       });
     });
     return rows;
   }, [state.attempts]);
-
   const topicEvolution = useMemo(() => {
     const map = {};
-    TOPICS.forEach(t => { map[t.id] = []; });
+    TOPICS.forEach(t => {
+      map[t.id] = [];
+    });
     state.sessions.forEach(s => {
       if (map[s.topicId]) {
-        map[s.topicId].push({ ts: s.ts, accuracy: s.correctCount / s.total, time: s.totalTimeSec });
+        map[s.topicId].push({
+          ts: s.ts,
+          accuracy: s.correctCount / s.total,
+          time: s.totalTimeSec
+        });
       }
     });
     return map;
   }, [state.sessions]);
-
   function exportCSV() {
-    if (!profileComplete(state.profile)) { setExportWarn(true); return; }
+    if (!profileComplete(state.profile)) {
+      setExportWarn(true);
+      return;
+    }
     const rows = [];
     rows.push(["section", "field1", "field2", "field3", "field4", "field5", "field6", "field7"]);
     rows.push(["profile", "name", state.profile.name || "", "studentId", state.profile.studentId || "", "group", state.profile.group || "", state.profile.email || ""]);
@@ -1312,7 +1816,9 @@ function Dashboard({ state, setState, setView }) {
       });
     });
     const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob(["\uFEFF" + csv], {
+      type: "text/csv;charset=utf-8"
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
@@ -1323,208 +1829,259 @@ function Dashboard({ state, setState, setView }) {
     a.click();
     URL.revokeObjectURL(url);
   }
-
   function resetAll() {
     if (confirm("確定要清除所有作答紀錄？此動作無法復原。\nClear all attempt records? This cannot be undone.")) {
-      setState(s => ({ ...s, attempts: {}, sessions: [] }));
+      setState(s => ({
+        ...s,
+        attempts: {},
+        sessions: []
+      }));
     }
   }
-
   const complete = profileComplete(state.profile);
   const [exportWarn, setExportWarn] = useState(false);
-
-  return (
-    <div>
-      <div className="flex flex-wrap items-center gap-3 mb-5">
-        <div className="flex-1">
-          <h2 className="h-display text-2xl">學習儀表板</h2>
-          <div className="serif italic text-sm opacity-70" style={{color:'var(--mute)'}}>Learning Dashboard</div>
-        </div>
-        <button className="bcg-btn flex items-center gap-2" style={complete ? undefined : {opacity:.45}}
-          onClick={() => { if (complete) { setExportWarn(false); exportCSV(); } else { setExportWarn(true); } }}>
-          <Icon.Download size={16} /> {complete ? '匯出 CSV / Export' : '匯出 CSV（未解鎖）'}
-        </button>
-        <button className="bcg-btn-ghost" onClick={resetAll}>清除 / Reset</button>
-      </div>
-
-      {!complete && (
-        <div className={"rounded-lg p-3.5 mb-5 text-sm flex flex-wrap items-center gap-3 " + (exportWarn ? '' : 'opacity-80')}
-          style={exportWarn
-            ? {color:'var(--bad)', background:'rgba(179,38,30,.08)', border:'1.5px solid rgba(179,38,30,.45)'}
-            : {color:'var(--mute)', background:'var(--bcg-cream)', border:'1px solid var(--line)'}}>
-          <div className="flex-1 min-w-[220px]">
-            {exportWarn ? '⚠ 尚未填寫個人資料，無法匯出 CSV。' : '🔒 匯出 CSV 前，請先填寫個人資料（四欄皆必填）。'}
-            尚缺：{profileMissing(state.profile).join('、')}
-            <span className="block italic text-xs mt-1 opacity-80">
-              {exportWarn ? 'Profile incomplete — CSV export is locked. ' : 'Complete your profile to unlock CSV export. '}
-              Missing: {profileMissing(state.profile).join(', ')}
-            </span>
-          </div>
-          <button className="bcg-btn-ghost text-sm" onClick={() => { setView('profile'); window.scrollTo({top:0,behavior:'smooth'}); }}>
-            前往填寫 / Go to Profile
-          </button>
-        </div>
-      )}
-
-      {state.profile.name && (
-        <div className="bcg-card-cream p-4 mb-5 text-sm">
-          <span className="opacity-70">作答者 / Learner：</span>
-          <span className="font-semibold">{state.profile.name}</span>
-          {state.profile.studentId && <span className="ml-3 opacity-70">ID: {state.profile.studentId}</span>}
-          {state.profile.group && <span className="ml-3 opacity-70">組別 / Group: {state.profile.group}</span>}
-          {state.profile.email && <span className="ml-3 opacity-70">{state.profile.email}</span>}
-        </div>
-      )}
-
-      {/* KPI cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <StatBox value={overall.totalAttempts} labelZh="總作答次數" labelEn="Total Attempts" />
-        <StatBox value={`${Math.round(overall.accuracy * 100)}%`} labelZh="整體正確率" labelEn="Overall Accuracy" />
-        <StatBox value={fmtTime(overall.totalTime)} labelZh="總花費時間" labelEn="Total Time" />
-        <StatBox value={`${overall.avgTime.toFixed(1)}s`} labelZh="平均每題時間" labelEn="Avg Time / Q" />
-      </div>
-
-      {/* Evolution */}
-      <div className="bcg-card p-5 mb-6">
-        <div className="serif font-bold text-lg mb-3" style={{color:'var(--bcg-green)'}}>
-          各主題正確率演進
-          <span className="serif italic font-normal text-sm opacity-70 ml-2">· Accuracy Evolution per Topic</span>
-        </div>
-        <div className="space-y-3">
-          {TOPICS.map(tp => {
-            const ev = topicEvolution[tp.id];
-            if (ev.length === 0) {
-              return (
-                <div key={tp.id} className="text-xs flex items-center gap-3 py-1">
-                  <div className="font-medium" style={{ minWidth: 160 }}>{tp.titleZh}</div>
-                  <div className="italic opacity-60">尚未測驗 / Not yet attempted</div>
-                </div>
-              );
-            }
-            return <SparkRow key={tp.id} labelZh={tp.titleZh} labelEn={tp.titleEn} points={ev} />;
-          })}
-        </div>
-      </div>
-
-      {/* Per-question table */}
-      <div className="bcg-card p-5 mb-6">
-        <div className="serif font-bold text-lg mb-3" style={{color:'var(--bcg-green)'}}>
-          各題練習紀錄
-          <span className="serif italic font-normal text-sm opacity-70 ml-2">· Per-Question Practice Record</span>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="kb">
-            <thead>
-              <tr>
-                <th>主題 · Topic</th>
-                <th>#</th>
-                <th>題目 · Question</th>
-                <th>次數 · Atts</th>
-                <th>正確率 · Acc</th>
-                <th>均時 · AvgT</th>
-                <th>上次 · Last</th>
-              </tr>
-            </thead>
-            <tbody>
-              {perQuestion.map((r, i) => (
-                <tr key={i}>
-                  <td className="text-xs">{r.topicLabelZh}</td>
-                  <td>{r.qIdx + 1}</td>
-                  <td className="text-xs">{r.qLabelZh}</td>
-                  <td>{r.attempts}</td>
-                  <td>{r.attempts > 0 ? `${Math.round(r.accuracy * 100)}%` : "—"}</td>
-                  <td>{r.attempts > 0 ? `${r.avgTime.toFixed(1)}s` : "—"}</td>
-                  <td>{r.lastCorrect === null ? "—" : r.lastCorrect ? <span style={{ color: "var(--ok)" }}>✓</span> : <span style={{ color: "var(--bad)" }}>✗</span>}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Session history */}
-      <div className="bcg-card p-5">
-        <div className="serif font-bold text-lg mb-3" style={{color:'var(--bcg-green)'}}>
-          測驗會話紀錄
-          <span className="serif italic font-normal text-sm opacity-70 ml-2">· Session History</span>
-        </div>
-        {state.sessions.length === 0 ? (
-          <div className="text-sm italic opacity-60">尚無測驗紀錄 / No sessions yet.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="kb">
-              <thead>
-                <tr>
-                  <th>時間 · Time</th>
-                  <th>主題 · Topic</th>
-                  <th>成績 · Score</th>
-                  <th>正確率 · Acc</th>
-                  <th>耗時 · Duration</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...state.sessions].reverse().map((s, i) => {
-                  const tp = TOPICS.find(t => t.id === s.topicId);
-                  return (
-                    <tr key={i}>
-                      <td className="text-xs">{new Date(s.ts).toLocaleString()}</td>
-                      <td className="text-xs">{tp?.titleZh}</td>
-                      <td>{s.correctCount}/{s.total}</td>
-                      <td>{Math.round(s.correctCount / s.total * 100)}%</td>
-                      <td>{fmtTime(s.totalTimeSec)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap items-center gap-3 mb-5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1"
+  }, /*#__PURE__*/React.createElement("h2", {
+    className: "h-display text-2xl"
+  }, "\u5B78\u7FD2\u5100\u8868\u677F"), /*#__PURE__*/React.createElement("div", {
+    className: "serif italic text-sm opacity-70",
+    style: {
+      color: 'var(--mute)'
+    }
+  }, "Learning Dashboard")), /*#__PURE__*/React.createElement("button", {
+    className: "bcg-btn flex items-center gap-2",
+    style: complete ? undefined : {
+      opacity: .45
+    },
+    onClick: () => {
+      if (complete) {
+        setExportWarn(false);
+        exportCSV();
+      } else {
+        setExportWarn(true);
+      }
+    }
+  }, /*#__PURE__*/React.createElement(Icon.Download, {
+    size: 16
+  }), " ", complete ? '匯出 CSV / Export' : '匯出 CSV（未解鎖）'), /*#__PURE__*/React.createElement("button", {
+    className: "bcg-btn-ghost",
+    onClick: resetAll
+  }, "\u6E05\u9664 / Reset")), !complete && /*#__PURE__*/React.createElement("div", {
+    className: "rounded-lg p-3.5 mb-5 text-sm flex flex-wrap items-center gap-3 " + (exportWarn ? '' : 'opacity-80'),
+    style: exportWarn ? {
+      color: 'var(--bad)',
+      background: 'rgba(179,38,30,.08)',
+      border: '1.5px solid rgba(179,38,30,.45)'
+    } : {
+      color: 'var(--mute)',
+      background: 'var(--bcg-cream)',
+      border: '1px solid var(--line)'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex-1 min-w-[220px]"
+  }, exportWarn ? '⚠ 尚未填寫個人資料，無法匯出 CSV。' : '🔒 匯出 CSV 前，請先填寫個人資料（四欄皆必填）。', "\u5C1A\u7F3A\uFF1A", profileMissing(state.profile).join('、'), /*#__PURE__*/React.createElement("span", {
+    className: "block italic text-xs mt-1 opacity-80"
+  }, exportWarn ? 'Profile incomplete — CSV export is locked. ' : 'Complete your profile to unlock CSV export. ', "Missing: ", profileMissing(state.profile).join(', '))), /*#__PURE__*/React.createElement("button", {
+    className: "bcg-btn-ghost text-sm",
+    onClick: () => {
+      setView('profile');
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+  }, "\u524D\u5F80\u586B\u5BEB / Go to Profile")), state.profile.name && /*#__PURE__*/React.createElement("div", {
+    className: "bcg-card-cream p-4 mb-5 text-sm"
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "opacity-70"
+  }, "\u4F5C\u7B54\u8005 / Learner\uFF1A"), /*#__PURE__*/React.createElement("span", {
+    className: "font-semibold"
+  }, state.profile.name), state.profile.studentId && /*#__PURE__*/React.createElement("span", {
+    className: "ml-3 opacity-70"
+  }, "ID: ", state.profile.studentId), state.profile.group && /*#__PURE__*/React.createElement("span", {
+    className: "ml-3 opacity-70"
+  }, "\u7D44\u5225 / Group: ", state.profile.group), state.profile.email && /*#__PURE__*/React.createElement("span", {
+    className: "ml-3 opacity-70"
+  }, state.profile.email)), /*#__PURE__*/React.createElement("div", {
+    className: "grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6"
+  }, /*#__PURE__*/React.createElement(StatBox, {
+    value: overall.totalAttempts,
+    labelZh: "\u7E3D\u4F5C\u7B54\u6B21\u6578",
+    labelEn: "Total Attempts"
+  }), /*#__PURE__*/React.createElement(StatBox, {
+    value: `${Math.round(overall.accuracy * 100)}%`,
+    labelZh: "\u6574\u9AD4\u6B63\u78BA\u7387",
+    labelEn: "Overall Accuracy"
+  }), /*#__PURE__*/React.createElement(StatBox, {
+    value: fmtTime(overall.totalTime),
+    labelZh: "\u7E3D\u82B1\u8CBB\u6642\u9593",
+    labelEn: "Total Time"
+  }), /*#__PURE__*/React.createElement(StatBox, {
+    value: `${overall.avgTime.toFixed(1)}s`,
+    labelZh: "\u5E73\u5747\u6BCF\u984C\u6642\u9593",
+    labelEn: "Avg Time / Q"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "bcg-card p-5 mb-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "serif font-bold text-lg mb-3",
+    style: {
+      color: 'var(--bcg-green)'
+    }
+  }, "\u5404\u4E3B\u984C\u6B63\u78BA\u7387\u6F14\u9032", /*#__PURE__*/React.createElement("span", {
+    className: "serif italic font-normal text-sm opacity-70 ml-2"
+  }, "\xB7 Accuracy Evolution per Topic")), /*#__PURE__*/React.createElement("div", {
+    className: "space-y-3"
+  }, TOPICS.map(tp => {
+    const ev = topicEvolution[tp.id];
+    if (ev.length === 0) {
+      return /*#__PURE__*/React.createElement("div", {
+        key: tp.id,
+        className: "text-xs flex items-center gap-3 py-1"
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "font-medium",
+        style: {
+          minWidth: 160
+        }
+      }, tp.titleZh), /*#__PURE__*/React.createElement("div", {
+        className: "italic opacity-60"
+      }, "\u5C1A\u672A\u6E2C\u9A57 / Not yet attempted"));
+    }
+    return /*#__PURE__*/React.createElement(SparkRow, {
+      key: tp.id,
+      labelZh: tp.titleZh,
+      labelEn: tp.titleEn,
+      points: ev
+    });
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "bcg-card p-5 mb-6"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "serif font-bold text-lg mb-3",
+    style: {
+      color: 'var(--bcg-green)'
+    }
+  }, "\u5404\u984C\u7DF4\u7FD2\u7D00\u9304", /*#__PURE__*/React.createElement("span", {
+    className: "serif italic font-normal text-sm opacity-70 ml-2"
+  }, "\xB7 Per-Question Practice Record")), /*#__PURE__*/React.createElement("div", {
+    className: "overflow-x-auto"
+  }, /*#__PURE__*/React.createElement("table", {
+    className: "kb"
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "\u4E3B\u984C \xB7 Topic"), /*#__PURE__*/React.createElement("th", null, "#"), /*#__PURE__*/React.createElement("th", null, "\u984C\u76EE \xB7 Question"), /*#__PURE__*/React.createElement("th", null, "\u6B21\u6578 \xB7 Atts"), /*#__PURE__*/React.createElement("th", null, "\u6B63\u78BA\u7387 \xB7 Acc"), /*#__PURE__*/React.createElement("th", null, "\u5747\u6642 \xB7 AvgT"), /*#__PURE__*/React.createElement("th", null, "\u4E0A\u6B21 \xB7 Last"))), /*#__PURE__*/React.createElement("tbody", null, perQuestion.map((r, i) => /*#__PURE__*/React.createElement("tr", {
+    key: i
+  }, /*#__PURE__*/React.createElement("td", {
+    className: "text-xs"
+  }, r.topicLabelZh), /*#__PURE__*/React.createElement("td", null, r.qIdx + 1), /*#__PURE__*/React.createElement("td", {
+    className: "text-xs"
+  }, r.qLabelZh), /*#__PURE__*/React.createElement("td", null, r.attempts), /*#__PURE__*/React.createElement("td", null, r.attempts > 0 ? `${Math.round(r.accuracy * 100)}%` : "—"), /*#__PURE__*/React.createElement("td", null, r.attempts > 0 ? `${r.avgTime.toFixed(1)}s` : "—"), /*#__PURE__*/React.createElement("td", null, r.lastCorrect === null ? "—" : r.lastCorrect ? /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--ok)"
+    }
+  }, "\u2713") : /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: "var(--bad)"
+    }
+  }, "\u2717")))))))), /*#__PURE__*/React.createElement("div", {
+    className: "bcg-card p-5"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "serif font-bold text-lg mb-3",
+    style: {
+      color: 'var(--bcg-green)'
+    }
+  }, "\u6E2C\u9A57\u6703\u8A71\u7D00\u9304", /*#__PURE__*/React.createElement("span", {
+    className: "serif italic font-normal text-sm opacity-70 ml-2"
+  }, "\xB7 Session History")), state.sessions.length === 0 ? /*#__PURE__*/React.createElement("div", {
+    className: "text-sm italic opacity-60"
+  }, "\u5C1A\u7121\u6E2C\u9A57\u7D00\u9304 / No sessions yet.") : /*#__PURE__*/React.createElement("div", {
+    className: "overflow-x-auto"
+  }, /*#__PURE__*/React.createElement("table", {
+    className: "kb"
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "\u6642\u9593 \xB7 Time"), /*#__PURE__*/React.createElement("th", null, "\u4E3B\u984C \xB7 Topic"), /*#__PURE__*/React.createElement("th", null, "\u6210\u7E3E \xB7 Score"), /*#__PURE__*/React.createElement("th", null, "\u6B63\u78BA\u7387 \xB7 Acc"), /*#__PURE__*/React.createElement("th", null, "\u8017\u6642 \xB7 Duration"))), /*#__PURE__*/React.createElement("tbody", null, [...state.sessions].reverse().map((s, i) => {
+    const tp = TOPICS.find(t => t.id === s.topicId);
+    return /*#__PURE__*/React.createElement("tr", {
+      key: i
+    }, /*#__PURE__*/React.createElement("td", {
+      className: "text-xs"
+    }, new Date(s.ts).toLocaleString()), /*#__PURE__*/React.createElement("td", {
+      className: "text-xs"
+    }, tp?.titleZh), /*#__PURE__*/React.createElement("td", null, s.correctCount, "/", s.total), /*#__PURE__*/React.createElement("td", null, Math.round(s.correctCount / s.total * 100), "%"), /*#__PURE__*/React.createElement("td", null, fmtTime(s.totalTimeSec)));
+  }))))));
 }
-
-function StatBox({ value, labelZh, labelEn }) {
-  return (
-    <div className="bcg-card p-4 text-center">
-      <div className="stat-num">{value}</div>
-      <div className="text-[11px] mt-1.5 leading-tight" style={{color:'var(--mute)'}}>
-        <div>{labelZh}</div>
-        <div className="italic opacity-80">{labelEn}</div>
-      </div>
-    </div>
-  );
+function StatBox({
+  value,
+  labelZh,
+  labelEn
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "bcg-card p-4 text-center"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "stat-num"
+  }, value), /*#__PURE__*/React.createElement("div", {
+    className: "text-[11px] mt-1.5 leading-tight",
+    style: {
+      color: 'var(--mute)'
+    }
+  }, /*#__PURE__*/React.createElement("div", null, labelZh), /*#__PURE__*/React.createElement("div", {
+    className: "italic opacity-80"
+  }, labelEn)));
 }
-
-function SparkRow({ labelZh, labelEn, points }) {
-  const W = 240, H = 36, PAD = 4;
+function SparkRow({
+  labelZh,
+  labelEn,
+  points
+}) {
+  const W = 240,
+    H = 36,
+    PAD = 4;
   const xs = points.map((_, i) => PAD + i * ((W - 2 * PAD) / Math.max(points.length - 1, 1)));
   const ys = points.map(p => PAD + (1 - p.accuracy) * (H - 2 * PAD));
   const path = points.map((_, i) => `${i === 0 ? "M" : "L"} ${xs[i].toFixed(1)} ${ys[i].toFixed(1)}`).join(" ");
   const last = points[points.length - 1];
-  return (
-    <div className="flex items-center gap-3 text-xs flex-wrap">
-      <div style={{ minWidth: 160 }}>
-        <div className="font-medium">{labelZh}</div>
-        <div className="italic opacity-70 text-[10.5px]">{labelEn}</div>
-      </div>
-      <svg width={W} height={H} className="shrink-0">
-        <line x1={PAD} y1={H / 2} x2={W - PAD} y2={H / 2} stroke="var(--line)" strokeWidth="0.5" strokeDasharray="2 2" />
-        <path d={path} fill="none" stroke="var(--bcg-green)" strokeWidth="1.5" className="dark-stroke-gold"/>
-        {points.map((p, i) => (
-          <circle key={i} cx={xs[i]} cy={ys[i]} r="3.5" fill={p.accuracy >= 0.75 ? "var(--ok)" : p.accuracy >= 0.5 ? "var(--bcg-green)" : "var(--bad)"} />
-        ))}
-      </svg>
-      <div className="opacity-70">
-        n={points.length} · latest <span className="font-semibold">{Math.round(last.accuracy * 100)}%</span>
-      </div>
-    </div>
-  );
+  return /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-3 text-xs flex-wrap"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      minWidth: 160
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "font-medium"
+  }, labelZh), /*#__PURE__*/React.createElement("div", {
+    className: "italic opacity-70 text-[10.5px]"
+  }, labelEn)), /*#__PURE__*/React.createElement("svg", {
+    width: W,
+    height: H,
+    className: "shrink-0"
+  }, /*#__PURE__*/React.createElement("line", {
+    x1: PAD,
+    y1: H / 2,
+    x2: W - PAD,
+    y2: H / 2,
+    stroke: "var(--line)",
+    strokeWidth: "0.5",
+    strokeDasharray: "2 2"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: path,
+    fill: "none",
+    stroke: "var(--bcg-green)",
+    strokeWidth: "1.5",
+    className: "dark-stroke-gold"
+  }), points.map((p, i) => /*#__PURE__*/React.createElement("circle", {
+    key: i,
+    cx: xs[i],
+    cy: ys[i],
+    r: "3.5",
+    fill: p.accuracy >= 0.75 ? "var(--ok)" : p.accuracy >= 0.5 ? "var(--bcg-green)" : "var(--bad)"
+  }))), /*#__PURE__*/React.createElement("div", {
+    className: "opacity-70"
+  }, "n=", points.length, " \xB7 latest ", /*#__PURE__*/React.createElement("span", {
+    className: "font-semibold"
+  }, Math.round(last.accuracy * 100), "%")));
 }
-
 function fmtTime(s) {
   if (s < 60) return `${Math.round(s)}s`;
-  const m = Math.floor(s / 60), ss = Math.round(s % 60);
+  const m = Math.floor(s / 60),
+    ss = Math.round(s % 60);
   return `${m}m ${ss}s`;
 }
 
@@ -1532,22 +2089,28 @@ function fmtTime(s) {
 // Footer
 // ============================================================
 function Footer() {
-  return (
-    <footer className="bg-[#004030] text-[#D8C3A5] mt-auto">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2 text-xs">
-        <div className="opacity-70">Version 2026.08.01 · For Educational Use Only</div>
-        <div className="flex items-center gap-4">
-          <span>Architect: <a href="https://www.ibs.ncnu.edu.tw/index.php/faculty/tenured-professor/299-smlo" target="_blank" rel="noopener" className="underline hover:text-white">Prof. Shihmin Lo</a></span>
-          <button onClick={() => window.scrollTo({top:0,behavior:'smooth'})} className="font-bold hover:text-white">Top ↑</button>
-        </div>
-      </div>
-    </footer>
-  );
+  return /*#__PURE__*/React.createElement("footer", {
+    className: "bg-[#004030] text-[#D8C3A5] mt-auto"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2 text-xs"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "opacity-70"
+  }, "Version 2026.08.01 \xB7 For Educational Use Only"), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-4"
+  }, /*#__PURE__*/React.createElement("span", null, "Architect: ", /*#__PURE__*/React.createElement("a", {
+    href: "https://www.ibs.ncnu.edu.tw/index.php/faculty/tenured-professor/299-smlo",
+    target: "_blank",
+    rel: "noopener",
+    className: "underline hover:text-white"
+  }, "Prof. Shihmin Lo")), /*#__PURE__*/React.createElement("button", {
+    onClick: () => window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    }),
+    className: "font-bold hover:text-white"
+  }, "Top \u2191"))));
 }
-
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <ErrorBoundary><App /></ErrorBoundary>
-);
+ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(ErrorBoundary, null, /*#__PURE__*/React.createElement(App, null)));
 </script>
 </body>
 </html>
