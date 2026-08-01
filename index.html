@@ -427,7 +427,7 @@ const _A0 = _e(_SALT, 0),
 /* ============================================================
    MODULE COUNT CONSTANTS
    ============================================================ */
-const NUM_LEARN = 9;
+const NUM_LEARN = 10;
 const TOTAL = 1 + NUM_LEARN + 3;
 const IDX_LAB = NUM_LEARN + 1;
 const IDX_RES = NUM_LEARN + 2;
@@ -787,7 +787,7 @@ const dict = {
     /* ---------- M0 ---------- */
     m0_nav: "0. 執行概要",
     m0_title: "執行概要：把 AI 放進教室之前，先搞懂三件事",
-    m0_intro: "這份互動教材整理自 2026 年 7 月 31 日逢甲大學 iLINK AI 教師工作坊的現場板書，核心命題只有一個：當 Agentic AI 能自主完成多步驟任務時，大學教師的角色該怎麼重新定義。板書把答案拆成三個層次。第一層是心法：教育的字源 educate 是 e-duc-ate，意思是「引出」，因此教學的本質不是灌輸而是引導、誘發與啟發；順著這個邏輯，EMI（English as a Medium of Instruction）只是手段，真正的目的地是 EML（English as a Medium of Learning）與 SDL 自主學習。第二層是架構：所有 AI 協作都收斂為 I-P-O，也就是 Input、Process、Output，再往前推一步到 Outcome；驅動整條鏈的起點是 Intention 意圖，而不是工具。第三層是手法：把聽說讀寫的素材全部轉成文字，寫成 Markdown 知識庫當作母版，再派生出 SVG 向量圖、SPA 單頁應用與 PWA 漸進式網頁應用三種給人看的形式。最後回到資源限制——Context Window 是稀缺的，於是有了 Token 經濟學與 RAG 檢索增強。九個學習模組會依序拆解這三個層次，並在互動實驗室讓你親手試算一次。",
+    m0_intro: "這份互動教材整理自 2026 年 7 月 31 日逢甲大學 iLINK AI 教師工作坊的現場板書，核心命題只有一個：當 Agentic AI 能自主完成多步驟任務時，大學教師的角色該怎麼重新定義。板書把答案拆成三個層次。第一層是心法：教育的字源 educate 是 e-duc-ate，意思是「引出」，因此教學的本質不是灌輸而是引導、誘發與啟發；順著這個邏輯，EMI（English as a Medium of Instruction）只是手段，真正的目的地是 EML（English as a Medium of Learning）與 SDL 自主學習。第二層是架構：所有 AI 協作都收斂為 I-P-O，也就是 Input、Process、Output，再往前推一步到 Outcome；驅動整條鏈的起點是 Intention 意圖，而不是工具。第三層是手法：把聽說讀寫的素材全部轉成文字，寫成 Markdown 知識庫當作母版，再派生出 SVG 向量圖、SPA 單頁應用與 PWA 漸進式網頁應用三種給人看的形式。最後回到資源限制——Context Window 是稀缺的，於是有了 Token 經濟學與 RAG 檢索增強。十個學習模組會依序拆解這三個層次，並在互動實驗室讓你親手試算一次。",
     m0_why: "為什麼這件事現在才重要？",
     m0_why_desc: "生成式 AI 讓「產出」變便宜，但學習成效（Outcome）並沒有跟著自動變好。當學生可以三秒鐘生出一份報告，教師如果還停留在檢查 Output，等於在檢查一個已經失去鑑別力的指標。這份教材主張把評量重心從 Output 移到 Outcome，也就是志向（aspiration）與素養（competency）的實質提升——而素養＝f(知識, 技能, 態度)。這正是 Agentic AI 時代，人類教師無法被取代的那一段。",
     m0_modules: [{
@@ -826,6 +826,10 @@ const dict = {
       num: "09",
       title: "基本功：① × ② × ③",
       desc: "取得需求 × 知識庫與規格 × Vibe Coding，三者相乘缺一即零，並由 Feedback Loop 繞回起點。"
+    }, {
+      num: "10",
+      title: "評量對照：Outcome 怎麼量",
+      desc: "指標先分成可計分與只觀測兩類；competency 依 K·S·A 分項，aspiration 靠三個獨立行為痕跡三角驗證。"
     }],
     m0_stats: [{
       val: "I-P-O",
@@ -1428,8 +1432,76 @@ const dict = {
       ans: _A1,
       exp: "課堂活動有雙重身分：往下游是素材，往上游是需求訊號。只取前者等於切斷 Feedback Loop，流程就回到線性、無法自我改善。"
     }],
+    /* ---------- M10 ---------- */
+    m10_nav: "10. 評量對照：Outcome 怎麼量",
+    m10_title: "評量對照：Outcome 到底用什麼指標衡量",
+    m10_overview: "模組三主張把評量重心從 Output 移到 Outcome，但沒說 Outcome 怎麼量——這個缺口不補，「Output ≠ Outcome」就只是一句口號。這一模組處理三件事：為什麼 Outcome 難量、指標必須先分成「可計分」與「只觀測」兩類、以及 competency 與 aspiration 各自該用什麼指標。",
+    m10_highlights: ["Outcome 是變化量", "A 類可計分 / L 類只觀測", "K·S·A 分項指標", "aspiration 三角驗證", "代理指標會被表演", "跨次縱貫"],
+    m10_p1: "先說難在哪。第一，代理指標會被表演：任何指標一旦計入成績，學生就會針對指標最佳化，該指標隨即失去效度。第二，自陳有社會期許偏誤：直接問「你有多想學」「你進步了嗎」，得到的是學生認為你想聽的答案。第三，單次測不出變化：competency 與 aspiration 都是變化量，至少要兩個時間點才有意義。這三件事同時成立，所以 Outcome 的量測不可能靠一份問卷或一次考試解決。",
+    m10_p2: "Outcome 不是一個數字，是兩個時間點的差。",
+    m10_p3: "本模組最重要的一個決定是分流。承接模組七「評量判斷 Output，歷程觀測 Process」的分野，指標必須先分成兩類：A 類（評量）對產出下判斷，有 rubric、有證據引文、可申訴，因此可以計入成績；L 類（歷程）觀測過程、決定要不要介入，絕對不可計分——一旦計分即被表演，資料立刻失真。麻煩的地方在於，Outcome 的證據多半落在 L 類，而 L 類正是不能拿來打分的那一類。這不是矛盾而是分工：A 類決定成績，L 類決定教學怎麼調整。把兩者混用，等於同時毀掉成績的公正性與歷程資料的真實性。",
+    m10_p4: "接著看 competency = f(K, S, A) 的三個分量。K 知識的舊做法失效了，因為 AI 免費供應 K，「答得出來」已無鑑別力；改測「無 AI 情境下辨識錯誤的能力」——能否指出一段 AI 產物中的事實錯誤或論證漏洞，這可以計分。S 技能要測的是中介步驟的品質：能否舉出有情境、有行動、有結果的具體例證，能否把大目標拆成可執行的小問題，這也可以計分。A 態度與價值觀最難，問卷自陳失真最嚴重；改為觀測面對回饋時的行為——收到回饋後訂正還是忽略、訂正是照抄建議還是有自己的判斷、是否主動查證 AI 說法，但這一項只觀測、不計分。這三個分量的測量成本遞增、可計分性遞減，恰好解釋了為什麼傳統評量會塌縮成只考 K：不是因為 K 最重要，而是因為它最好量。",
+    m10_p5: "aspiration 志向沒有任何單一可靠指標，只能用三個彼此獨立的行為痕跡交叉判讀。① 自主延伸：是否問了超出作業範圍的問題、是否在未要求處多做，這反映內在動機，與成績誘因無關。② 持續性：非強制的訂正是否完成、課程結束後是否仍有動作，這要等誘因消失後才看得出來。③ 自我監控品質：自評欄「我最沒把握的部分是＿」寫得具體還是敷衍，這是 SDL 自主學習的前導指標。判讀紀律很重要：三者任一單獨出現都不足以判定——①高但②低可能只是一時興趣，③高但①②皆低可能只是會寫自評，三者同向才構成 aspiration 上升的證據。而這三項都不能計分：一旦學生知道「多問問題會加分」，①就變成表演；一旦訂正率計入成績，②就從內在動機退化為外在服從，量到的東西恰好不再是你想量的東西。",
+    m10_p6: "最後是誠實的部分。一次作業最多測到 competency 的 S 與 A，加上 aspiration 的第三項；K 與 aspiration 的①② 需要另外的設計，例如口頭抽問與跨次追蹤。不要宣稱一份作業測到了 Outcome——那正是 Output 通膨的另一種形式。真正的量測要靠縱貫設計：單次作業內看訂正品質，跨次看同一概念的錯誤率變化，跨學期沿用同一份 rubric 才看得出 competency 的真實位移。這條縱貫資料再流回模組九的 Feedback Loop，成為下一輪「取得需求」的輸入——這也是模組八「價值傳遞」是否成立的唯一檢驗方式。",
+    m10_wrapup: "把這一模組壓成三句話：Outcome 是兩個時間點的差，不是一個數字；它的證據多半落在不能計分的 L 類，所以評量與觀測必須分軌；aspiration 沒有單一指標，只能靠三個獨立行為痕跡同向才算數。這三句合起來說的是同一件事——當你把某個指標拿來打分，你就失去了它。願意讓一部分資料「只看不打分」，是量測 Outcome 的入場費。",
+    m10_terms: [{
+      front: "Outcome 是變化量",
+      back: "Outcome 是兩個時間點的差，不是一個數字。任何「本學期 Outcome 達 85 分」的說法，都是把 Output 改個名字。"
+    }, {
+      front: "A 類指標（可計分）",
+      back: "對產出下判斷。有 rubric、有證據引文、可申訴，因此能進成績系統。"
+    }, {
+      front: "L 類指標（只觀測）",
+      back: "對過程做觀測，用於決定要不要介入。一旦計分即被表演，資料失真，故絕對不可換算成績。"
+    }, {
+      front: "代理指標的表演效應",
+      back: "任何指標一旦計入成績，學生就會針對指標最佳化，該指標隨即失去效度——量到的不再是你想量的東西。"
+    }, {
+      front: "K 的新測法",
+      back: "AI 免費供應知識，「答得出來」已無鑑別力；改測「無 AI 情境下辨識錯誤的能力」。可計分。"
+    }, {
+      front: "S 的中介步驟品質",
+      back: "不看「知道方法」，看能否舉出有情境、有行動、有結果的例證，能否把大目標拆成可執行的小問題。可計分。"
+    }, {
+      front: "A 的行為觀測",
+      back: "態度不靠問卷自陳，改看面對回饋時的行為：訂正還是忽略、有無自己的判斷、是否主動查證。只觀測、不計分。"
+    }, {
+      front: "aspiration 三角驗證",
+      back: "自主延伸 × 誘因消失後的持續性 × 自我監控品質。三者同向才構成證據，任一單獨出現都不足以判定。"
+    }],
+    m10_q: [{
+      q: "本模組主張指標必須先分成「A 類可計分」與「L 類只觀測」兩類，理由是什麼？",
+      opts: ["A 類的資料量比較小", "L 類一旦計分即被表演，資料立刻失真", "L 類的蒐集成本較高", "A 類比較符合學校規定"],
+      ans: _A1,
+      exp: "評量判斷 Output、歷程觀測 Process，屬不同構面。麻煩在於 Outcome 的證據多半落在 L 類，而 L 類正是不能打分的那一類——混用會同時毀掉成績的公正性與歷程資料的真實性。"
+    }, {
+      q: "在 AI 免費供應知識的情況下，K（知識）應改測什麼？",
+      opts: ["記憶更多的專有名詞", "無 AI 情境下辨識錯誤的能力", "答題速度", "查資料的熟練度"],
+      ans: _A1,
+      exp: "「答得出來」已無鑑別力，因為 AI 可代勞。改測能否指出一段 AI 產物中的事實錯誤或論證漏洞——這一項仍可計分。"
+    }, {
+      q: "為什麼 A（態度／價值觀）建議只觀測、不計分？",
+      opts: ["因為它不重要", "因為問卷自陳失真最嚴重，且一旦計分行為即被表演", "因為學校不允許評量態度", "因為它已包含在 K 裡面"],
+      ans: _A1,
+      exp: "A 的證據是面對回饋時的行為（訂正還是忽略、有無自己的判斷）。這類行為一旦與成績掛鉤，就從內在動機退化為外在服從，量到的東西不再是原本想量的。"
+    }, {
+      q: "aspiration（志向）為什麼採「三角驗證」而非單一指標？",
+      opts: ["為了增加評分項目", "因為沒有任何單一可靠指標，需三個獨立行為痕跡同向才構成證據", "為了讓分數分佈更平均", "因為三是統計學的最低樣本數"],
+      ans: _A1,
+      exp: "①自主延伸高但②持續性低，可能只是一時興趣；③自我監控高但①②皆低，可能只是會寫自評。三者同向才排除得掉這些替代解釋。"
+    }, {
+      q: "下列哪一項是 aspiration 三角驗證中「自我監控品質」的具體觀察？",
+      opts: ["作業總分的高低", "自評欄「我最沒把握的部分」寫得具體還是敷衍", "出席率", "繳交作業的準時率"],
+      ans: _A1,
+      exp: "自評欄的品質反映學生對自己理解狀態的覺察程度，是 SDL 自主學習的前導指標；分數、出席、準時都測不到這一層。"
+    }, {
+      q: "教師說「這學期學生的 Outcome 達到 85 分」，依本模組的判準，問題出在哪？",
+      opts: ["分數應該再高一點", "Outcome 是兩個時間點的差，不是一個數字——這說法只是把 Output 改個名字", "應該改用百分位數呈現", "應該加上標準差"],
+      ans: _A1,
+      exp: "Outcome 是變化量，必須有前後兩個時間點才有意義。單一時點的數字無論叫什麼名字，量到的都還是 Output。"
+    }],
     /* ---------- LAB ---------- */
-    mlab_nav: "10. 互動實驗室",
+    mlab_nav: "11. 互動實驗室",
     mlab_title: "互動實驗室：把架構跑一次",
     mlab_desc: "以下五件互動工具讓你親手操作本教材的核心架構：從意圖出發設計一條 I-P-O、依需求挑選正確的產出格式、試算 Context Window 的配置與 RAG 門檻、用 f(K,S,A) 診斷一堂課的素養設計是否失衡，並以兩軸編碼表盤點本梯次的現場需求。",
     mlab_labs: [{
@@ -1528,7 +1600,7 @@ const dict = {
     lab4_d_sa: "✓ 偏重 S 與 A，這正是 AI 時代教師最不可取代的部分，但仍需確保 K 的基礎足夠支撐。",
     lab_reset: "重設",
     /* ---------- RESOURCES ---------- */
-    mres_nav: "11. 外部學習資源",
+    mres_nav: "12. 外部學習資源",
     mres_title: "外部學習資源",
     mres_desc: "以下資源依本教材的三個層次分組整理：心法（教學設計與素養）、架構（Agentic AI 與協作協定）、手法（產出格式與技術規格）。所有連結均為外部網站，於新分頁開啟。",
     mres_g1: "心法：教學設計與素養",
@@ -1657,7 +1729,7 @@ const dict = {
     /* ---------- M0 ---------- */
     m0_nav: "0. Executive Summary",
     m0_title: "Executive Summary: Three Things to Settle Before AI Enters the Classroom",
-    m0_intro: "This interactive courseware is derived from the whiteboard notes of the FCU iLINK AI Faculty Workshop held on 31 July 2026. It addresses a single question: when Agentic AI can autonomously complete multi-step tasks, how should the role of a university teacher be redefined? The notes answer in three layers. The first is mindset. The word educate comes from e-duc-ate, meaning to draw out; teaching is therefore not transmission but guidance, elicitation and inspiration. Following that logic, EMI (English as a Medium of Instruction) is only a means, while the real destination is EML (English as a Medium of Learning) and ultimately SDL, self-directed learning. The second layer is architecture. All AI collaboration converges on I-P-O, that is Input, Process and Output, extended one step further to Outcome; what drives the whole chain is Intention, not tooling. The third layer is method. Convert every listening, speaking, reading and writing artefact into text, write it into a Markdown knowledge base as the master source, then derive three human-facing forms from it: SVG vector graphics, SPA single-page applications and PWA progressive web apps. Finally we return to the resource constraint. The context window is scarce, which gives rise to token economics and to RAG, retrieval-augmented generation. The nine learning modules unpack these three layers in sequence, and the Interactive Lab lets you run the arithmetic yourself.",
+    m0_intro: "This interactive courseware is derived from the whiteboard notes of the FCU iLINK AI Faculty Workshop held on 31 July 2026. It addresses a single question: when Agentic AI can autonomously complete multi-step tasks, how should the role of a university teacher be redefined? The notes answer in three layers. The first is mindset. The word educate comes from e-duc-ate, meaning to draw out; teaching is therefore not transmission but guidance, elicitation and inspiration. Following that logic, EMI (English as a Medium of Instruction) is only a means, while the real destination is EML (English as a Medium of Learning) and ultimately SDL, self-directed learning. The second layer is architecture. All AI collaboration converges on I-P-O, that is Input, Process and Output, extended one step further to Outcome; what drives the whole chain is Intention, not tooling. The third layer is method. Convert every listening, speaking, reading and writing artefact into text, write it into a Markdown knowledge base as the master source, then derive three human-facing forms from it: SVG vector graphics, SPA single-page applications and PWA progressive web apps. Finally we return to the resource constraint. The context window is scarce, which gives rise to token economics and to RAG, retrieval-augmented generation. The ten learning modules unpack these three layers in sequence, and the Interactive Lab lets you run the arithmetic yourself.",
     m0_why: "Why does this matter only now?",
     m0_why_desc: "Generative AI has made output cheap, but learning outcomes have not improved automatically alongside it. When a student can generate a report in three seconds, a teacher who still inspects output is measuring an indicator that has lost its discriminating power. This courseware argues for moving the centre of assessment from Output to Outcome, that is, to genuine gains in aspiration and competency, where competency equals f(Knowledge, Skill, Attitude). That is precisely the part no Agentic AI can take over from a human teacher.",
     m0_modules: [{
@@ -1696,6 +1768,10 @@ const dict = {
       num: "09",
       title: "Fundamentals: ① × ② × ③",
       desc: "Needs times knowledge base and spec times vibe coding — multiplied, so any zero zeroes it all, then looped back by feedback."
+    }, {
+      num: "10",
+      title: "Measuring Outcome",
+      desc: "Split indicators into gradable and observe-only; measure competency by K·S·A and read aspiration through three independent traces."
     }],
     m0_stats: [{
       val: "I-P-O",
@@ -2298,8 +2374,76 @@ const dict = {
       ans: _A1,
       exp: "Classroom activity has a dual role: material downstream, demand signal upstream. Taking only the first severs the feedback loop and returns the process to a linear one that cannot improve itself."
     }],
+    /* ---------- M10 ---------- */
+    m10_nav: "10. Measuring Outcome",
+    m10_title: "Measuring Outcome: Which Indicators Actually Work",
+    m10_overview: "Module 3 argues for moving assessment from Output to Outcome, but never says how Outcome is measured — and without that, 'Output is not Outcome' remains a slogan. This module handles three things: why Outcome is hard to measure, why indicators must first be split into 'gradable' and 'observe-only', and which indicators suit competency and aspiration respectively.",
+    m10_highlights: ["Outcome is a delta", "Gradable vs observe-only", "K·S·A indicators", "Aspiration triangulation", "Graded proxies get gamed", "Longitudinal design"],
+    m10_p1: "Start with the difficulties. First, proxies get gamed: the moment an indicator counts towards a grade, students optimise for the indicator and it loses its validity. Second, self-report carries social-desirability bias: ask students directly whether they are motivated or whether they have improved, and you get the answer they think you want. Third, a single measurement cannot show change: both competency and aspiration are deltas, and a delta needs at least two points in time. All three hold simultaneously, which is why measuring Outcome can never be solved by one questionnaire or one exam.",
+    m10_p2: "Outcome is not a number. It is the difference between two points in time.",
+    m10_p3: "The most important decision in this module is the split. Following module 7's distinction — assessment judges Output, process data observes Process — indicators must first be sorted into two classes. Class A (assessment) judges the artefact; it has a rubric, evidence quotations and an appeals route, so it can count towards a grade. Class L (process) observes the process and decides whether to intervene; it must never be graded, because the moment it is, it gets performed and the data goes false. The awkward part is that most evidence for Outcome sits in class L — precisely the class that cannot be graded. This is not a contradiction but a division of labour: class A determines the grade, class L determines how teaching gets adjusted. Mix them and you destroy both the fairness of the grade and the truthfulness of the process data.",
+    m10_p4: "Now the three components of competency = f(K, S, A). The old approach to K has failed, because AI supplies knowledge for free and 'being able to answer' no longer discriminates; measure instead the ability to detect error without AI — can the student point to a factual mistake or a hole in the reasoning inside an AI-produced passage? That is gradable. S should be measured through the quality of intermediate steps: can the student produce a concrete example with situation, action and result, and can they break a large goal into executable small questions? Also gradable. A, attitude and values, is the hardest and the one where self-report distorts most; measure instead the behaviour that follows feedback — did the student revise or ignore it, did the revision merely copy the suggestion or show judgement, did they verify what AI told them? But this one is observed only, never graded. Measurement cost rises across the three while gradability falls, which neatly explains why traditional assessment collapses into testing K alone: not because K matters most, but because it is easiest to quantify.",
+    m10_p5: "Aspiration has no single reliable indicator; it can only be read through three mutually independent behavioural traces. First, self-extension: did the student ask questions beyond the assignment, or do more where nothing was required? This reflects intrinsic motivation and is unrelated to grade incentives. Second, persistence: was a non-compulsory revision completed, is there still activity after the course ends? This only becomes visible once the incentive is gone. Third, the quality of self-monitoring: is the self-assessment field, 'the part I am least sure about is ___', specific or perfunctory? That is a leading indicator of self-directed learning. The reading discipline matters: no single trace is sufficient on its own — high self-extension with low persistence may be a passing interest, and high self-monitoring with neither of the others may just mean the student writes good self-assessments. Only when all three point the same way do they constitute evidence. And none of them may be graded: once students know that asking more questions earns marks, the first becomes performance; once revision rates count towards a grade, the second degrades from intrinsic motivation into external compliance, and what you measure is no longer what you wanted to measure.",
+    m10_p6: "Finally, the honest part. A single assignment measures, at most, the S and A components of competency plus the third aspiration trace. K and the first two aspiration traces need separate designs, such as oral spot-checks and cross-round tracking. Do not claim that one assignment has measured Outcome — that is Output inflation wearing another name. Real measurement depends on longitudinal design: within one assignment, look at revision quality; across rounds, look at how the error rate for the same concept shifts; across terms, keep the same rubric, because only then does a genuine displacement in competency become visible. That longitudinal data then flows back into module 9's feedback loop as the input for the next round of needs acquisition — which is also the only way to verify whether module 8's value delivery actually happened.",
+    m10_wrapup: "Three sentences hold this module together. Outcome is the difference between two points in time, not a number. Most of its evidence sits in class L, which cannot be graded, so assessment and observation must run on separate tracks. Aspiration has no single indicator and counts only when three independent traces point the same way. All three say the same thing: the moment you grade an indicator, you lose it. Being willing to let some data be watched but never scored is the entry fee for measuring Outcome.",
+    m10_terms: [{
+      front: "Outcome is a delta",
+      back: "Outcome is the difference between two points in time, not a number. Any claim that 'Outcome reached 85 this term' is Output under a new name."
+    }, {
+      front: "Class A indicators (gradable)",
+      back: "Judge the artefact. Backed by a rubric, evidence quotations and an appeals route, so they can enter the grade book."
+    }, {
+      front: "Class L indicators (observe-only)",
+      back: "Observe the process to decide whether to intervene. Grading them makes them performed and the data false, so they must never be converted into marks."
+    }, {
+      front: "Proxy gaming",
+      back: "Once an indicator counts towards a grade, students optimise for the indicator and it loses validity — what you measure stops being what you meant to measure."
+    }, {
+      front: "The new test for K",
+      back: "AI supplies knowledge for free, so 'being able to answer' no longer discriminates; measure the ability to detect error without AI. Gradable."
+    }, {
+      front: "S: intermediate-step quality",
+      back: "Not whether the method is known, but whether the student can give an example with situation, action and result, and break a goal into executable questions. Gradable."
+    }, {
+      front: "A: observed through behaviour",
+      back: "Attitude is not self-reported; read the behaviour after feedback — revise or ignore, copy or judge, verify AI or not. Observed only, never graded."
+    }, {
+      front: "Aspiration triangulation",
+      back: "Self-extension × persistence after the incentive is gone × quality of self-monitoring. Evidence only when all three align; no single trace suffices."
+    }],
+    m10_q: [{
+      q: "Why must indicators first be split into gradable class A and observe-only class L?",
+      opts: ["Class A involves less data", "Because grading class L makes it performed and the data immediately goes false", "Class L is more expensive to collect", "Class A better matches school regulations"],
+      ans: _A1,
+      exp: "Assessment judges Output while process data observes Process — different dimensions. The catch is that most Outcome evidence sits in class L, the very class that cannot be graded; mixing them destroys both grade fairness and data truthfulness."
+    }, {
+      q: "With AI supplying knowledge for free, what should K be measured as instead?",
+      opts: ["Memorising more terminology", "The ability to detect error without AI", "Speed of answering", "Fluency at looking things up"],
+      ans: _A1,
+      exp: "'Being able to answer' no longer discriminates because AI can do it. Measure instead whether the student can point to a factual mistake or a hole in the reasoning inside an AI-produced passage — still gradable."
+    }, {
+      q: "Why is A (attitude and values) recommended as observe-only?",
+      opts: ["Because it does not matter", "Because self-report distorts most, and once graded the behaviour is performed", "Because schools forbid assessing attitude", "Because it is already contained in K"],
+      ans: _A1,
+      exp: "Evidence for A is the behaviour after feedback — revise or ignore, copy or judge. Tie that to a grade and it degrades from intrinsic motivation into external compliance, and the measurement stops capturing what it was meant to."
+    }, {
+      q: "Why does aspiration use triangulation rather than a single indicator?",
+      opts: ["To add more scoring items", "Because no single indicator is reliable; three independent traces must align to constitute evidence", "To flatten the score distribution", "Because three is the minimum sample size in statistics"],
+      ans: _A1,
+      exp: "High self-extension with low persistence may be a passing interest; strong self-monitoring with neither of the others may just mean the student writes good self-assessments. Only alignment rules out these alternative explanations."
+    }, {
+      q: "Which is the concrete observation for the 'quality of self-monitoring' trace?",
+      opts: ["The total mark on the assignment", "Whether the self-assessment field 'the part I am least sure about' is specific or perfunctory", "Attendance rate", "Punctuality of submission"],
+      ans: _A1,
+      exp: "The quality of the self-assessment reflects how well students perceive their own state of understanding — a leading indicator of self-directed learning. Marks, attendance and punctuality cannot reach that layer."
+    }, {
+      q: "A teacher says 'our students reached 85 on Outcome this term'. What is wrong with that claim?",
+      opts: ["The figure should be higher", "Outcome is the difference between two points in time, not a number — this is Output renamed", "It should be given as a percentile", "It should include a standard deviation"],
+      ans: _A1,
+      exp: "Outcome is a delta and needs two points in time to mean anything. A single-timepoint figure, whatever it is called, is still measuring Output."
+    }],
     /* ---------- LAB ---------- */
-    mlab_nav: "10. Interactive Lab",
+    mlab_nav: "11. Interactive Lab",
     mlab_title: "Interactive Lab: Run the Architecture Yourself",
     mlab_desc: "The five tools below let you operate the core architecture of this courseware by hand: design an I-P-O chain from an intention, pick the right output format for your need, model context window allocation and the RAG threshold, diagnose whether a course design is balanced under f(K,S,A), and audit this cohort's needs with the two-axis coding sheet.",
     mlab_labs: [{
@@ -2398,7 +2542,7 @@ const dict = {
     lab4_d_sa: "✓ Weighted towards S and A, precisely where teachers are least replaceable in the AI era — though ensure the K base is sufficient to support them.",
     lab_reset: "Reset",
     /* ---------- RESOURCES ---------- */
-    mres_nav: "11. Learning Resources",
+    mres_nav: "12. Learning Resources",
     mres_title: "External Learning Resources",
     mres_desc: "Resources are grouped by the three layers of this courseware: mindset (instructional design and competency), architecture (Agentic AI and collaboration protocols), and method (output formats and technical specifications). All links are external and open in a new tab.",
     mres_g1: "Mindset: Instructional Design and Competency",
@@ -2800,6 +2944,84 @@ const ModuleSVG = ({
     fontSize: "10",
     fontFamily: "Inter, sans-serif"
   }, zh ? '課堂活動的雙重身分：往下游是素材，往上游是需求訊號' : 'Classroom activity: material downstream, demand signal upstream')), "0 0 500 284");
+  if (module === 10) return wrap(/*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("text", {
+    x: "250",
+    y: "18",
+    textAnchor: "middle",
+    fill: C,
+    fontSize: "12.5",
+    fontWeight: "700",
+    fontFamily: "Inter, sans-serif"
+  }, zh ? 'Outcome ＝ 兩個時間點的差（不是一個數字）' : 'Outcome = the difference between two points in time'), box(30, 34, 150, 40, zh ? '期初 T₁' : 'Start T₁', null), box(320, 34, 150, 40, zh ? '期末 T₂' : 'End T₂', null), arrow(184, 54, 316, 54), /*#__PURE__*/React.createElement("text", {
+    x: "250",
+    y: "48",
+    textAnchor: "middle",
+    fill: C,
+    fontSize: "13",
+    fontWeight: "700",
+    fontFamily: "Inter, sans-serif"
+  }, "\u0394"), /*#__PURE__*/React.createElement("line", {
+    x1: "20",
+    y1: "92",
+    x2: "480",
+    y2: "92",
+    stroke: C,
+    strokeOpacity: "0.3",
+    strokeWidth: "1"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "250",
+    y: "112",
+    textAnchor: "middle",
+    fill: C,
+    fontSize: "12",
+    fontWeight: "700",
+    fontFamily: "Inter, sans-serif"
+  }, zh ? '指標必須先分兩軌' : 'Indicators must run on two tracks'), box(14, 126, 220, 50, zh ? 'A 類：評量' : 'Class A: Assessment', zh ? '判斷 Output → 可計分 ✅' : 'judges Output → gradable', isDark ? '#004030' : '#D8C3A5'), box(266, 126, 220, 50, zh ? 'L 類：歷程' : 'Class L: Process', zh ? '觀測 Process → 不可計分 ❌' : 'observes Process → never graded'), /*#__PURE__*/React.createElement("text", {
+    x: "250",
+    y: "196",
+    textAnchor: "middle",
+    fill: M,
+    fontSize: "10",
+    fontFamily: "Inter, sans-serif"
+  }, zh ? 'Outcome 的證據多半落在右邊——正是不能打分的那一類' : 'Most Outcome evidence sits on the right — the class that cannot be graded'), /*#__PURE__*/React.createElement("line", {
+    x1: "20",
+    y1: "212",
+    x2: "480",
+    y2: "212",
+    stroke: C,
+    strokeOpacity: "0.3",
+    strokeWidth: "1"
+  }), box(14, 226, 150, 46, zh ? 'K 知識' : 'K Knowledge', zh ? '無 AI 辨錯 ✅' : 'detect error w/o AI'), box(176, 226, 150, 46, zh ? 'S 技能' : 'S Skill', zh ? '中介步驟品質 ✅' : 'intermediate steps'), box(338, 226, 148, 46, zh ? 'A 態度' : 'A Attitude', zh ? '回饋後行為 ❌' : 'behaviour after feedback'), /*#__PURE__*/React.createElement("text", {
+    x: "250",
+    y: "292",
+    textAnchor: "middle",
+    fill: M,
+    fontSize: "10",
+    fontFamily: "Inter, sans-serif"
+  }, zh ? '測量成本遞增 →　可計分性遞減 →' : 'Measurement cost rises →   gradability falls →'), /*#__PURE__*/React.createElement("line", {
+    x1: "20",
+    y1: "308",
+    x2: "480",
+    y2: "308",
+    stroke: C,
+    strokeOpacity: "0.3",
+    strokeWidth: "1"
+  }), /*#__PURE__*/React.createElement("text", {
+    x: "250",
+    y: "328",
+    textAnchor: "middle",
+    fill: C,
+    fontSize: "12",
+    fontWeight: "700",
+    fontFamily: "Inter, sans-serif"
+  }, zh ? 'aspiration：三者同向才算數' : 'Aspiration: only when all three align'), box(14, 342, 150, 44, zh ? '① 自主延伸' : '① Self-extension', null), box(176, 342, 150, 44, zh ? '② 持續性' : '② Persistence', null), box(338, 342, 148, 44, zh ? '③ 自我監控' : '③ Self-monitoring', null), /*#__PURE__*/React.createElement("text", {
+    x: "250",
+    y: "406",
+    textAnchor: "middle",
+    fill: M,
+    fontSize: "10",
+    fontFamily: "Inter, sans-serif"
+  }, zh ? '三項皆不可計分——一旦計分即被表演，量到的不再是你想量的' : 'None may be graded — once graded they are performed, and you measure something else')), "0 0 500 420");
   return null;
 };
 
@@ -3622,7 +3844,7 @@ function App() {
   const LS_KEY = 'AAI_SPA_analytics';
   const LS_STU = 'AAI_SPA_student';
   const LS_VER = 'AAI_SPA_version';
-  const APP_VERSION = '2026.07.31b';
+  const APP_VERSION = '2026.08.01';
   const loadLS = (key, fb) => {
     try {
       const v = localStorage.getItem(key);
@@ -3705,6 +3927,11 @@ function App() {
     num: 9,
     icon: '🏋️',
     title: t.m9_nav
+  }, {
+    id: 10,
+    num: 10,
+    icon: '📐',
+    title: t.m10_nav
   }, {
     id: IDX_LAB,
     num: IDX_LAB,
