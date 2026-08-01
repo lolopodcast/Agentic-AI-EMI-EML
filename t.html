@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>手機開啟問題／逐步測試</title>
+<style>
+ body{font-family:-apple-system,"Noto Sans TC",sans-serif;background:#f4f1ea;color:#1a1a1a;margin:0;padding:22px 16px;line-height:1.65}
+ h1{font-size:21px;color:#004030;margin:0 0 6px}
+ .sub{font-size:14px;color:#6b6b6b;margin-bottom:20px}
+ a.t{display:block;background:#fff;border:1px solid #E3D9C5;border-left:5px solid #004030;
+     border-radius:10px;padding:15px 16px;margin-bottom:12px;text-decoration:none;color:#1a1a1a}
+ .n{font-size:12px;color:#004030;font-weight:700;letter-spacing:.5px}
+ .ttl{font-size:17px;font-weight:700;margin:3px 0}
+ .d{font-size:13.5px;color:#5a5a5a}
+ .note{background:#004030;color:#D8C3A5;border-radius:10px;padding:15px;font-size:14px;margin-top:20px}
+</style>
+</head>
+<body>
+<h1>手機開啟問題：逐步測試</h1>
+<div class="sub">請在 <strong>LINE 或 FB 裡</strong>依序點下面四個連結，記下第幾個開始出問題。</div>
+
+<a class="t" href="t1-plain.html">
+  <div class="n">測試 1</div>
+  <div class="ttl">純 HTML</div>
+  <div class="d">零 JavaScript、零外部資源。這頁若開不了，問題與網頁內容無關。</div>
+</a>
+
+<a class="t" href="t2-diag.html">
+  <div class="n">測試 2</div>
+  <div class="ttl">環境診斷（會顯示一堆資料）</div>
+  <div class="d">檢查是否被包在框架裡、能不能載入外部 CDN。頁面上有「複製全部結果」按鈕。</div>
+</a>
+
+<a class="t" href="t3-noguard.html">
+  <div class="n">測試 3</div>
+  <div class="ttl">教材 SPA（拿掉防護程式）</div>
+  <div class="d">內容與正式版完全相同，只移除 Domain Lock 與防嵌入程式。</div>
+</a>
+
+<a class="t" href="./">
+  <div class="n">測試 4</div>
+  <div class="ttl">教材 SPA（正式版）</div>
+  <div class="d">目前線上的版本，含防護程式。</div>
+</a>
+
+<div class="note">
+  <strong>請回報：</strong><br>
+  1. 第幾個開始出問題？<br>
+  2. 出問題時畫面上<strong>實際看到什麼</strong>？（一直轉圈／全白／有錯誤文字／自動跳出去／出現「請用瀏覽器開啟」）<br>
+  3. 測試 2 若能開，請按「複製全部結果」貼回來。
+</div>
+</body>
+</html>
